@@ -20,5 +20,5 @@ class Stock:
         # av_ts.
 
     def get_name(self):
-        if self.ticker == None:
+        if self.ticker is None:
             pass

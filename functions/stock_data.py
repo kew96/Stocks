@@ -1,5 +1,3 @@
-import requests
-import pandas
 from alpha_vantage.timeseries import TimeSeries
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
@@ -20,5 +18,5 @@ class Stock:
         # av_ts.
 
     def get_name(self):
-        if self.ticker == None:
+        if self.ticker is None:
             pass

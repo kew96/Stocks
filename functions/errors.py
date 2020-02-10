@@ -1,4 +1,2 @@
-import Exception
-
-
-class
+class NoTicker(BaseException):
+    pass

@@ -1,5 +1,3 @@
-import requests
-import pandas
 from alpha_vantage.timeseries import TimeSeries
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'

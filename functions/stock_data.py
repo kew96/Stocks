@@ -14,7 +14,7 @@ class Stock:
 
     def __init__(self, ticker=None, name=None):
         self.ticker = ticker
-        self.name = self.get_name() in name is None else name
+        self.name = self.get_name() if name is None else name
         # TODO: self.name
         self.data, self.meta = av_ts.get_daily_adjusted(symbol=self.ticker, outputsize='full')
         # av_ts.

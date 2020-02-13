@@ -68,9 +68,9 @@ class Stock:
         return options[index]
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self, period='daily', data_type='close'):
+    def simple_moving_average(self, interval='daily', data_type='close'):
         """
-        :param period: a string defining the period of each average the options are:
+        :param interval: a string defining the period of each average the options are:
                         ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         :param data_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
                     The options are the following: ['close', 'open', 'high', 'low']
@@ -78,13 +78,142 @@ class Stock:
         """
         period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         type_options = ['close', 'open', 'high', 'low']
-        if period not in period_options:
-            period = self.__create_output_question(period, period_options)
+        if interval not in period_options:
+            interval = self.__create_output_question(interval, period_options)
         if data_type not in type_options:
             data_type = self.__create_output_question(data_type, type_options)
-        return av_ti.get_sma(symbol=self.ticker, interval=period, time_period=200, series_type=data_type)
+        return av_ti.get_sma(symbol=self.ticker, interval=interval, time_period=200, series_type=data_type)
+
+    @Alias('ema', 'EMA')
+    def exponential_moving_average(self, interval='daily', data_type='close'):
+        """
+        :param interval: a string defining the period of each average the options are:
+                        ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        :param data_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
+                    The options are the following: ['close', 'open', 'high', 'low']
+        :return: returns a dataframe with a datetime index and floats for values
+        """
+        period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        type_options = ['close', 'open', 'high', 'low']
+        if interval not in period_options:
+            interval = self.__create_output_question(interval, period_options)
+        if data_type not in type_options:
+            data_type = self.__create_output_question(data_type, type_options)
+        return av_ti.get_ema(symbol=self.ticker, interval=interval, time_period=200, series_type=data_type)
+
+    # TODO: WMA
+
+    # TODO: DEMA
+
+    # TODO: TEMA
+
+    # TODO: TRIMA
+
+    # TODO: KAMA
+
+    # TODO: MAMA
+
+    @Alias('vwap', 'VWAP')
+    def volume_weighted_average_price(self, interval='15min'):
+        period_options = ['1min', '5min', '15min', '30min', '60min']
+        if interval not in period_options:
+            interval = self.__create_output_question(interval, period_options)
+        return av_ti.get_vwap(symbol=self.ticker, interval=interval)
+
+    # TODO: T3
+
+    @Alias('macd', 'MACD')
+    def moving_average_convergence_divergence(self, interval='daily', data_type='close', fastperiod=12,
+                                              slowperiod=26, signalperiod=9):
+        pass
+        # TODO: MACD*
+
+
+# TODO: MACDEXT
+
+# TODO: STOCH*
+
+# TODO: STOCHF
+
+# TODO: RSI*
+
+# TODO: STOCHRSI
+
+# TODO: WILLR
+
+# TODO: ADX*
+
+# TODO: ADXR
+
+# TODO: APO
+
+# TODO: PPO
+
+# TODO: MOM
+
+# TODO: BOP
+
+# TODO: CCI*
+
+# TODO: CMO
+
+# TODO: ROC
+
+# TODO: ROCR
+
+# TODO: AROON*
+
+# TODO: AROONOSC
+
+# TODO: MFI
+
+# TODO: TRIX
+
+# TODO: ULTOSC
+
+# TODO: DX
+
+# TODO: MINUS_DI
+
+# TODO: PLUS_DI
+
+# TODO: MINUS_DM
+
+# TODO: PLUS_DM
+
+# TODO: BBANDS*
+
+# TODO: MIDPOINT
+
+# TODO: MIDPRICE
+
+# TODO: SAR
+
+# TODO: TRANGE
+
+# TODO: ATR
+
+# TODO: NATR
+
+# TODO: AD*
+
+# TODO: ADOSC
+
+# TODO: OBV*
+
+# TODO: HT_TRENDLINE
+
+# TODO: HT_SINE
+
+# TODO: HT_TRENDMODE
+
+# TODO: HT_DCPERIOD
+
+# TODO: HT_DCPHASE
+
+# TODO: HT_PHASOR
 
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s.sma('1'))
+    print(s.vwap('1'))

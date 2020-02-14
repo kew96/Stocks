@@ -60,12 +60,17 @@ class Stock:
 
     @staticmethod
     def __create_output_question(choice, options):
-        print('"'+choice+'" is not a valid option.')
+        print('"' + choice + '" is not a valid option.')
         output = 'Please choose one of the following options by number: \n'
-        for i, o in enumerate(options):
-            output = output + str(i+1) + '. ' + o + '\n'
-        index = int(input(output)) - 1
-        return options[index]
+        if type(options) == list:
+            print('"' + choice + '" is not a valid option.')
+            output = 'Please choose one of the following options by number: \n'
+            for i, o in enumerate(options):
+                output = output + str(i + 1) + '. ' + o + '\n'
+            index = int(input(output)) - 1
+            return options[index]
+        elif type(options) == dict:
+            pass
 
     @Alias('sma', 'SMA')
     def simple_moving_average(self, interval='daily', data_type='close'):
@@ -128,10 +133,23 @@ class Stock:
         pass
         # TODO: MACD*
 
+    # TODO: MACDEXT
 
-# TODO: MACDEXT
+    # TODO: STOCH*
+    @Alias('stoch', 'STOCH', 'stoch_oscillator')
+    def stochastic_oscillator(self, interval='daily', fast_k_period=5, slow_k_period=3,
+                              slow_d_period=3, slow_k_ma_type=0, slow_d_ma_type=0):
+        type_options = {}
+        if fast_k_period <= 0 or type(fast_k_period) != int:
+            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(fast_k_period))
+            fast_k_period = int(choice)
+        if slow_k_period <= 0 or type(slow_k_period) != int:
+            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slow_k_period))
+            slow_k_period = int(choice)
+        if slow_d_period <= 0 or type(slow_d_period) != int:
+            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slow_d_period))
+            slow_d_period = int(choice)
 
-# TODO: STOCH*
 
 # TODO: STOCHF
 

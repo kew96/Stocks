@@ -54,7 +54,7 @@ class Stock:
             raise NoTickerError()
 
     def __check_size(self):
-
+        pass
     # TODO: check that size is either 'compact' or 'full'
 
     @Alias('sma', 'SMA')

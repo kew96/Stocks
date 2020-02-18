@@ -137,9 +137,23 @@ class Stock:
     @Alias('macd', 'MACD')
     def moving_average_convergence_divergence(self, interval='daily', data_type='close', fastperiod=12,
                                               slowperiod=26, signalperiod=9):
-        pass
-        # TODO: MACD*
-
+        period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        type_options = ['close', 'open', 'high', 'low']
+        if interval not in period_options:
+            interval = self.__create_output_question(interval, period_options)
+        if data_type not in type_options:
+            data_type = self.__create_output_question(data_type, type_options)
+        if fastperiod <= 0 or type(fastperiod) != int:
+            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(fastperiod))
+            fastperiod = int(choice)
+        if slowperiod <= 0 or type(slowperiod) != int:
+            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slowperiod))
+            slowperiod = int(choice)
+        if signalperiod <= 0 or type(signalperiod) != int:
+            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(signalperiod))
+            signalperiod = int(choice)
+        return av_ti.get_macd(symbol=self.ticker, interval=interval, fastperiod=fastperiod,
+                              slowperiod=slowperiod, signalperiod=signalperiod)
     # TODO: MACDEXT
 
     @staticmethod
@@ -185,7 +199,6 @@ class Stock:
             interval = self.__create_output_question(interval, interval_options)
         return av_ti.get_stoch(self.ticker, interval=interval, fastkperiod=fast_k_period, slowkperiod=slow_k_period,
                                slowdperiod=slow_d_period, slowkmatype=slow_k_ma_type, slowdmatype=slow_d_ma_type)
-
 
 # TODO: STOCHF
 

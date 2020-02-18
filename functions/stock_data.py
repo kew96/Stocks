@@ -61,15 +61,13 @@ class Stock:
 
     @staticmethod
     def __get_output_from_list(choice, options):
-        if choice.lower() != 'help':
-            print('"' + choice + '" is not a valid option.')
         output = 'Please choose one of the following options by number: \n'
         if type(options) == list:
             if choice in options:
                 return choice
             else:
-                print('"' + choice + '" is not a valid option.')
-                output = 'Please choose one of the following options by number: \n'
+                if choice.lower() != 'help':
+                    print('"' + choice + '" is not a valid option.')
                 for i, o in enumerate(options):
                     output = output + str(i + 1) + '. ' + o + '\n'
                 index = int(input(output)) - 1
@@ -80,6 +78,8 @@ class Stock:
             elif choice in options.values():
                 return choice
             else:
+                if choice.lower() != 'help':
+                    print('"' + choice + '" is not a valid option.')
                 for key, val in options.items():
                     if str(val + 1) in output:
                         output = output[:-1] + ' (' + key + ')\n'
@@ -92,7 +92,7 @@ class Stock:
     def __get_output_int(choice, minimum=np.inf, maximum=np.inf):
         if type(choice) != int or choice < minimum or choice > maximum:
             choice = input(
-                'Please select an integer between {} and {}, {} is not a valid choice:\n'.format(str(minimum),
+                'Please select an integer between {} and {}, {} is not a valid choice:\n'.format(str(minimum - 1),
                                                                                                  str(maximum),
                                                                                                  str(choice)))
         return int(choice)
@@ -214,6 +214,9 @@ class Stock:
     # TODO: WILLR
 
     # TODO: ADX*
+    @Alias('adx', 'ADX', 'average_directional_movement')
+    def average_directional_movement_index(self):
+        pass
 
     # TODO: ADXR
 
@@ -288,4 +291,4 @@ class Stock:
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s.stoch())
+    print(s.rsi(time_period=-1))

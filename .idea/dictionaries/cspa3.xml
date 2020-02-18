@@ -1,18 +1,36 @@
 <component name="ProjectDictionaryState">
   <dictionary name="cspa3">
     <words>
+      <w>adosc</w>
+      <w>adxr</w>
+      <w>aroon</w>
+      <w>aroonosc</w>
+      <w>bbands</w>
       <w>dataframe</w>
+      <w>dcperiod</w>
+      <w>dcphase</w>
       <w>dema</w>
       <w>fastperiod</w>
       <w>macd</w>
       <w>macdext</w>
+      <w>midprice</w>
+      <w>natr</w>
       <w>pewceosfc</w>
+      <w>phasor</w>
+      <w>rocr</w>
       <w>signalperiod</w>
       <w>slowperiod</w>
       <w>stoch</w>
+      <w>stochf</w>
+      <w>stochrsi</w>
       <w>subchoices</w>
+      <w>trange</w>
+      <w>trendline</w>
+      <w>trendmode</w>
+      <w>ultosc</w>
       <w>vals</w>
       <w>vwap</w>
+      <w>willr</w>
     </words>
   </dictionary>
 </component>

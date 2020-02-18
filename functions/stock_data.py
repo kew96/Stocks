@@ -60,6 +60,10 @@ class Stock:
             raise WrongFormatError(self.size)
 
     @staticmethod
+    def help():
+        print("Input 'help' for any argument to see input options.")
+
+    @staticmethod
     def __get_output_from_list(choice, options):
         output = 'Please choose one of the following options by number: \n'
         if type(options) == list:

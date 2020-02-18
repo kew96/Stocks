@@ -2,11 +2,13 @@
   <dictionary name="cspa3">
     <words>
       <w>dataframe</w>
+      <w>dema</w>
       <w>fastperiod</w>
       <w>macd</w>
       <w>pewceosfc</w>
       <w>signalperiod</w>
       <w>slowperiod</w>
+      <w>stoch</w>
       <w>subchoices</w>
       <w>vals</w>
       <w>vwap</w>

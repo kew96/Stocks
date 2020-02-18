@@ -60,7 +60,8 @@ class Stock:
 
     @staticmethod
     def __create_output_question(choice, options):
-        print('"' + choice + '" is not a valid option.')
+        if choice.lower() != 'help':
+            print('"' + choice + '" is not a valid option.')
         output = 'Please choose one of the following options by number: \n'
         if type(options) == list:
             print('"' + choice + '" is not a valid option.')
@@ -70,7 +71,13 @@ class Stock:
             index = int(input(output)) - 1
             return options[index]
         elif type(options) == dict:
-            pass
+            for key, val in options.items():
+                if str(val + 1) in output:
+                    output = output[:-1] + ' (' + key + ')\n'
+                else:
+                    output = output + str(val + 1) + '. ' + key + '\n'
+            index = int(input(output)) - 1
+            return index
 
     @Alias('sma', 'SMA')
     def simple_moving_average(self, interval='daily', data_type='close'):
@@ -135,11 +142,36 @@ class Stock:
 
     # TODO: MACDEXT
 
-    # TODO: STOCH*
+    @staticmethod
+    def __check_convert(entry, options):
+        if type(entry) in (int, float):
+            entry = int(entry)
+        else:
+            if ' ' in entry:
+                if entry[:4].lower() == 'mesa':
+                    entry = entry[:4].upper() + entry[4:].title()
+                else:
+                    entry = entry.title()
+            else:
+                entry = entry.upper()
+            if entry in options.keys() or entry in options.values():
+                return options[entry]
+            else:
+                return Stock.__create_output_question(entry, options)
+
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
     def stochastic_oscillator(self, interval='daily', fast_k_period=5, slow_k_period=3,
-                              slow_d_period=3, slow_k_ma_type=0, slow_d_ma_type=0):
-        type_options = {}
+                              slow_d_period=3, slow_k_ma_type='help', slow_d_ma_type='help'):
+        type_options = {
+            'Simple Moving Average': 0, 'SMA': 0, 'Exponential Moving Average': 1, 'EMA': 1,
+            'Weighted Moving Average': 2, 'WMA': 2, 'Double Exponential Moving Average': 3, 'DEMA': 3,
+            'Triple Exponential Moving Average': 4, 'TEMA': 4, 'Triangular Moving Average': 5, 'TRIMA': 5,
+            'T3 Moving Average': 6, 'Kaufman Adaptive Moving Average': 7, 'KAMA': 7,
+            'MESA Adaptive Moving Average': 8, 'MAMA': 8
+        }
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        slow_k_ma_type = self.__check_convert(slow_k_ma_type, type_options)
+        slow_d_ma_type = self.__check_convert(slow_d_ma_type, type_options)
         if fast_k_period <= 0 or type(fast_k_period) != int:
             choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(fast_k_period))
             fast_k_period = int(choice)
@@ -149,6 +181,10 @@ class Stock:
         if slow_d_period <= 0 or type(slow_d_period) != int:
             choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slow_d_period))
             slow_d_period = int(choice)
+        if interval not in interval_options:
+            interval = self.__create_output_question(interval, interval_options)
+        return av_ti.get_stoch(self.ticker, interval=interval, fastkperiod=fast_k_period, slowkperiod=slow_k_period,
+                               slowdperiod=slow_d_period, slowkmatype=slow_k_ma_type, slowdmatype=slow_d_ma_type)
 
 
 # TODO: STOCHF
@@ -234,4 +270,4 @@ class Stock:
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s.vwap('1'))
+    print(s.stoch())

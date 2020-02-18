@@ -310,6 +310,11 @@ class Stock:
     # TODO: ADOSC
 
     # TODO: OBV*
+    @Alias('obv', 'OBV', 'balance_volume')
+    def on_balance_volume(self, interval='daily'):
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        interval = self.__get_output_from_list(interval, interval_options)
+        return av_ti.get_obv(symbol=self.ticker, interval=interval)
 
     # TODO: HT_TRENDLINE
 

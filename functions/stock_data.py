@@ -327,8 +327,3 @@ class Stock:
     # TODO: HT_DCPHASE
 
     # TODO: HT_PHASOR
-
-
-if __name__ == '__main__':
-    s = Stock('AAPL')
-    print(s.rsi(time_period=-1))

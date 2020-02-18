@@ -213,10 +213,12 @@ class Stock:
 
     # TODO: WILLR
 
-    # TODO: ADX*
     @Alias('adx', 'ADX', 'average_directional_movement')
-    def average_directional_movement_index(self):
-        pass
+    def average_directional_movement_index(self, interval='daily', time_period=200):
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        interval = self.__get_output_from_list(interval, interval_options)
+        time_period = self.__get_output_int(time_period, 1)
+        return av_ti.get_adx(symbol=self.ticker, interval=interval, time_period=time_period)
 
     # TODO: ADXR
 

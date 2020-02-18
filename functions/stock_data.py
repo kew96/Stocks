@@ -98,34 +98,34 @@ class Stock:
         return int(choice)
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self, interval='daily', data_type='close'):
+    def simple_moving_average(self, interval='daily', series_type='close'):
         """
         :param interval: a string defining the period of each average the options are:
                         ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
-        :param data_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
+        :param series_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
                     The options are the following: ['close', 'open', 'high', 'low']
         :return: returns a dataframe with a datetime index and floats for values
         """
-        period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
-        type_options = ['close', 'open', 'high', 'low']
-        interval = self.__get_output_from_list(interval, period_options)
-        data_type = self.__get_output_from_list(data_type, type_options)
-        return av_ti.get_sma(symbol=self.ticker, interval=interval, time_period=200, series_type=data_type)
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        series_options = ['close', 'open', 'high', 'low']
+        interval = self.__get_output_from_list(interval, interval_options)
+        series_type = self.__get_output_from_list(series_type, series_options)
+        return av_ti.get_sma(symbol=self.ticker, interval=interval, time_period=200, series_type=series_type)
 
     @Alias('ema', 'EMA')
-    def exponential_moving_average(self, interval='daily', data_type='close'):
+    def exponential_moving_average(self, interval='daily', series_type='close'):
         """
         :param interval: a string defining the period of each average the options are:
                         ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
-        :param data_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
+        :param series_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
                     The options are the following: ['close', 'open', 'high', 'low']
         :return: returns a dataframe with a datetime index and floats for values
         """
-        period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
-        type_options = ['close', 'open', 'high', 'low']
-        interval = self.__get_output_from_list(interval, period_options)
-        data_type = self.__get_output_from_list(data_type, type_options)
-        return av_ti.get_ema(symbol=self.ticker, interval=interval, time_period=200, series_type=data_type)
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        series_options = ['close', 'open', 'high', 'low']
+        interval = self.__get_output_from_list(interval, interval_options)
+        series_type = self.__get_output_from_list(series_type, series_options)
+        return av_ti.get_ema(symbol=self.ticker, interval=interval, time_period=200, series_type=series_type)
 
     # TODO: WMA
 
@@ -141,24 +141,24 @@ class Stock:
 
     @Alias('vwap', 'VWAP')
     def volume_weighted_average_price(self, interval='15min'):
-        period_options = ['1min', '5min', '15min', '30min', '60min']
-        interval = self.__get_output_from_list(interval, period_options)
+        interval_options = ['1min', '5min', '15min', '30min', '60min']
+        interval = self.__get_output_from_list(interval, interval_options)
         return av_ti.get_vwap(symbol=self.ticker, interval=interval)
 
     # TODO: T3
 
     @Alias('macd', 'MACD')
-    def moving_average_convergence_divergence(self, interval='daily', data_type='close', fastperiod=12,
+    def moving_average_convergence_divergence(self, interval='daily', series_type='close', fastperiod=12,
                                               slowperiod=26, signalperiod=9):
-        period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
-        type_options = ['close', 'open', 'high', 'low']
-        interval = self.__get_output_from_list(interval, period_options)
-        data_type = self.__get_output_from_list(data_type, type_options)
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        series_options = ['close', 'open', 'high', 'low']
+        interval = self.__get_output_from_list(interval, interval_options)
+        series_type = self.__get_output_from_list(series_type, series_options)
         fastperiod = self.__get_output_int(fastperiod, 1)
         slowperiod = self.__get_output_int(slowperiod, 1)
         signalperiod = self.__get_output_int(signalperiod, 1)
         return av_ti.get_macd(symbol=self.ticker, interval=interval, fastperiod=fastperiod,
-                              slowperiod=slowperiod, signalperiod=signalperiod, series_type=data_type)
+                              slowperiod=slowperiod, signalperiod=signalperiod, series_type=series_type)
     # TODO: MACDEXT
 
     @staticmethod
@@ -200,7 +200,14 @@ class Stock:
 
     # TODO: STOCHF
 
-    # TODO: RSI*
+    @Alias('rsi', 'RSI', 'relative_strength')
+    def relative_strength_index(self, interval='daily', time_period=200, series_type='close'):
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        series_options = ['close', 'open', 'high', 'low']
+        interval = self.__get_output_from_list(interval, interval_options)
+        series_type = self.__get_output_from_list(series_type, series_options)
+        time_period = self.__get_output_int(time_period, 1)
+        return av_ti.get_rsi(self.ticker, interval=interval, time_period=time_period, series_type=series_type)
 
     # TODO: STOCHRSI
 

@@ -2,6 +2,7 @@ from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.techindicators import TechIndicators
 from errors import *
 from alias import *
+import numpy as np
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
 av_ts = TimeSeries(alpha_vantage_KEY)
@@ -59,25 +60,42 @@ class Stock:
             raise WrongFormatError(self.size)
 
     @staticmethod
-    def __create_output_question(choice, options):
+    def __get_output_from_list(choice, options):
         if choice.lower() != 'help':
             print('"' + choice + '" is not a valid option.')
         output = 'Please choose one of the following options by number: \n'
         if type(options) == list:
-            print('"' + choice + '" is not a valid option.')
-            output = 'Please choose one of the following options by number: \n'
-            for i, o in enumerate(options):
-                output = output + str(i + 1) + '. ' + o + '\n'
-            index = int(input(output)) - 1
-            return options[index]
+            if choice in options:
+                return choice
+            else:
+                print('"' + choice + '" is not a valid option.')
+                output = 'Please choose one of the following options by number: \n'
+                for i, o in enumerate(options):
+                    output = output + str(i + 1) + '. ' + o + '\n'
+                index = int(input(output)) - 1
+                return options[index]
         elif type(options) == dict:
-            for key, val in options.items():
-                if str(val + 1) in output:
-                    output = output[:-1] + ' (' + key + ')\n'
-                else:
-                    output = output + str(val + 1) + '. ' + key + '\n'
-            index = int(input(output)) - 1
-            return index
+            if choice in options.keys():
+                return options[choice]
+            elif choice in options.values():
+                return choice
+            else:
+                for key, val in options.items():
+                    if str(val + 1) in output:
+                        output = output[:-1] + ' (' + key + ')\n'
+                    else:
+                        output = output + str(val + 1) + '. ' + key + '\n'
+                index = int(input(output)) - 1
+                return index
+
+    @staticmethod
+    def __get_output_int(choice, minimum=np.inf, maximum=np.inf):
+        if type(choice) != int or choice < minimum or choice > maximum:
+            choice = input(
+                'Please select an integer between {} and {}, {} is not a valid choice:\n'.format(str(minimum),
+                                                                                                 str(maximum),
+                                                                                                 str(choice)))
+        return int(choice)
 
     @Alias('sma', 'SMA')
     def simple_moving_average(self, interval='daily', data_type='close'):
@@ -90,10 +108,8 @@ class Stock:
         """
         period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         type_options = ['close', 'open', 'high', 'low']
-        if interval not in period_options:
-            interval = self.__create_output_question(interval, period_options)
-        if data_type not in type_options:
-            data_type = self.__create_output_question(data_type, type_options)
+        interval = self.__get_output_from_list(interval, period_options)
+        data_type = self.__get_output_from_list(data_type, type_options)
         return av_ti.get_sma(symbol=self.ticker, interval=interval, time_period=200, series_type=data_type)
 
     @Alias('ema', 'EMA')
@@ -107,10 +123,8 @@ class Stock:
         """
         period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         type_options = ['close', 'open', 'high', 'low']
-        if interval not in period_options:
-            interval = self.__create_output_question(interval, period_options)
-        if data_type not in type_options:
-            data_type = self.__create_output_question(data_type, type_options)
+        interval = self.__get_output_from_list(interval, period_options)
+        data_type = self.__get_output_from_list(data_type, type_options)
         return av_ti.get_ema(symbol=self.ticker, interval=interval, time_period=200, series_type=data_type)
 
     # TODO: WMA
@@ -128,8 +142,7 @@ class Stock:
     @Alias('vwap', 'VWAP')
     def volume_weighted_average_price(self, interval='15min'):
         period_options = ['1min', '5min', '15min', '30min', '60min']
-        if interval not in period_options:
-            interval = self.__create_output_question(interval, period_options)
+        interval = self.__get_output_from_list(interval, period_options)
         return av_ti.get_vwap(symbol=self.ticker, interval=interval)
 
     # TODO: T3
@@ -139,21 +152,13 @@ class Stock:
                                               slowperiod=26, signalperiod=9):
         period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         type_options = ['close', 'open', 'high', 'low']
-        if interval not in period_options:
-            interval = self.__create_output_question(interval, period_options)
-        if data_type not in type_options:
-            data_type = self.__create_output_question(data_type, type_options)
-        if fastperiod <= 0 or type(fastperiod) != int:
-            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(fastperiod))
-            fastperiod = int(choice)
-        if slowperiod <= 0 or type(slowperiod) != int:
-            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slowperiod))
-            slowperiod = int(choice)
-        if signalperiod <= 0 or type(signalperiod) != int:
-            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(signalperiod))
-            signalperiod = int(choice)
+        interval = self.__get_output_from_list(interval, period_options)
+        data_type = self.__get_output_from_list(data_type, type_options)
+        fastperiod = self.__get_output_int(fastperiod, 1)
+        slowperiod = self.__get_output_int(slowperiod, 1)
+        signalperiod = self.__get_output_int(signalperiod, 1)
         return av_ti.get_macd(symbol=self.ticker, interval=interval, fastperiod=fastperiod,
-                              slowperiod=slowperiod, signalperiod=signalperiod)
+                              slowperiod=slowperiod, signalperiod=signalperiod, series_type=data_type)
     # TODO: MACDEXT
 
     @staticmethod
@@ -171,7 +176,7 @@ class Stock:
             if entry in options.keys() or entry in options.values():
                 return options[entry]
             else:
-                return Stock.__create_output_question(entry, options)
+                return Stock.__get_output_from_list(entry, options)
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
     def stochastic_oscillator(self, interval='daily', fast_k_period=5, slow_k_period=3,
@@ -186,99 +191,92 @@ class Stock:
         interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         slow_k_ma_type = self.__check_convert(slow_k_ma_type, type_options)
         slow_d_ma_type = self.__check_convert(slow_d_ma_type, type_options)
-        if fast_k_period <= 0 or type(fast_k_period) != int:
-            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(fast_k_period))
-            fast_k_period = int(choice)
-        if slow_k_period <= 0 or type(slow_k_period) != int:
-            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slow_k_period))
-            slow_k_period = int(choice)
-        if slow_d_period <= 0 or type(slow_d_period) != int:
-            choice = input('Please select a positive integer, {} is not a valid choice:\n'.format(slow_d_period))
-            slow_d_period = int(choice)
-        if interval not in interval_options:
-            interval = self.__create_output_question(interval, interval_options)
+        fast_k_period = self.__get_output_int(fast_k_period, 1)
+        slow_k_period = self.__get_output_int(slow_k_period, 1)
+        slow_d_period = self.__get_output_int(slow_d_period, 1)
+        interval = self.__get_output_from_list(interval, interval_options)
         return av_ti.get_stoch(self.ticker, interval=interval, fastkperiod=fast_k_period, slowkperiod=slow_k_period,
                                slowdperiod=slow_d_period, slowkmatype=slow_k_ma_type, slowdmatype=slow_d_ma_type)
 
-# TODO: STOCHF
+    # TODO: STOCHF
 
-# TODO: RSI*
+    # TODO: RSI*
 
-# TODO: STOCHRSI
+    # TODO: STOCHRSI
 
-# TODO: WILLR
+    # TODO: WILLR
 
-# TODO: ADX*
+    # TODO: ADX*
 
-# TODO: ADXR
+    # TODO: ADXR
 
-# TODO: APO
+    # TODO: APO
 
-# TODO: PPO
+    # TODO: PPO
 
-# TODO: MOM
+    # TODO: MOM
 
-# TODO: BOP
+    # TODO: BOP
 
-# TODO: CCI*
+    # TODO: CCI*
 
-# TODO: CMO
+    # TODO: CMO
 
-# TODO: ROC
+    # TODO: ROC
 
-# TODO: ROCR
+    # TODO: ROCR
 
-# TODO: AROON*
+    # TODO: AROON*
 
-# TODO: AROONOSC
+    # TODO: AROONOSC
 
-# TODO: MFI
+    # TODO: MFI
 
-# TODO: TRIX
+    # TODO: TRIX
 
-# TODO: ULTOSC
+    # TODO: ULTOSC
 
-# TODO: DX
+    # TODO: DX
 
-# TODO: MINUS_DI
+    # TODO: MINUS_DI
 
-# TODO: PLUS_DI
+    # TODO: PLUS_DI
 
-# TODO: MINUS_DM
+    # TODO: MINUS_DM
 
-# TODO: PLUS_DM
+    # TODO: PLUS_DM
 
-# TODO: BBANDS*
+    # TODO: BBANDS*
 
-# TODO: MIDPOINT
+    # TODO: MIDPOINT
 
-# TODO: MIDPRICE
+    # TODO: MIDPRICE
 
-# TODO: SAR
+    # TODO: SAR
 
-# TODO: TRANGE
+    # TODO: TRANGE
 
-# TODO: ATR
+    # TODO: ATR
 
-# TODO: NATR
+    # TODO: NATR
 
-# TODO: AD*
+    # TODO: AD*
 
-# TODO: ADOSC
+    # TODO: ADOSC
 
-# TODO: OBV*
+    # TODO: OBV*
 
-# TODO: HT_TRENDLINE
+    # TODO: HT_TRENDLINE
 
-# TODO: HT_SINE
+    # TODO: HT_SINE
 
-# TODO: HT_TRENDMODE
+    # TODO: HT_TRENDMODE
 
-# TODO: HT_DCPERIOD
+    # TODO: HT_DCPERIOD
 
-# TODO: HT_DCPHASE
+    # TODO: HT_DCPHASE
 
-# TODO: HT_PHASOR
+    # TODO: HT_PHASOR
 
 
 if __name__ == '__main__':

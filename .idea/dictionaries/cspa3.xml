@@ -6,6 +6,7 @@
       <w>aroon</w>
       <w>aroonosc</w>
       <w>bbands</w>
+      <w>bollinger</w>
       <w>dataframe</w>
       <w>dcperiod</w>
       <w>dcphase</w>
@@ -13,8 +14,11 @@
       <w>fastperiod</w>
       <w>macd</w>
       <w>macdext</w>
+      <w>matype</w>
       <w>midprice</w>
       <w>natr</w>
+      <w>nbdevdn</w>
+      <w>nbdevup</w>
       <w>pewceosfc</w>
       <w>phasor</w>
       <w>rocr</w>

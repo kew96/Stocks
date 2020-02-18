@@ -268,7 +268,26 @@ class Stock:
 
     # TODO: PLUS_DM
 
-    # TODO: BBANDS*
+    @Alias('bbands', 'BBANDS', 'Bollinger_bands')
+    def bollinger_bands(self, interval='daily', time_period=200, series_type='close',
+                        nbdevup=2, nbdevdn=2, matype=0):
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        series_options = ['close', 'open', 'high', 'low']
+        type_options = {
+            'Simple Moving Average': 0, 'SMA': 0, 'Exponential Moving Average': 1, 'EMA': 1,
+            'Weighted Moving Average': 2, 'WMA': 2, 'Double Exponential Moving Average': 3, 'DEMA': 3,
+            'Triple Exponential Moving Average': 4, 'TEMA': 4, 'Triangular Moving Average': 5, 'TRIMA': 5,
+            'T3 Moving Average': 6, 'Kaufman Adaptive Moving Average': 7, 'KAMA': 7,
+            'MESA Adaptive Moving Average': 8, 'MAMA': 8
+        }
+        interval = self.__get_output_from_list(interval, interval_options)
+        series_type = self.__get_output_from_list(series_type, series_options)
+        matype = self.__get_output_from_list(matype, type_options)
+        time_period = self.__get_output_int(time_period, 1)
+        nbdevup = self.__get_output_int(nbdevup, 1)
+        nbdevdn = self.__get_output_int(nbdevdn, 1)
+        return av_ti.get_bbands(symbol=self.ticker, interval=interval, series_type=series_type, time_period=time_period,
+                                nbdevup=nbdevup, nbdevdn=nbdevdn, matype=matype)
 
     # TODO: MIDPOINT
 

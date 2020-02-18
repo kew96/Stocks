@@ -301,7 +301,11 @@ class Stock:
 
     # TODO: NATR
 
-    # TODO: AD*
+    @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
+    def chaikin_ad_line_values(self, interval='daily'):
+        interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        interval = self.__get_output_from_list(interval, interval_options)
+        return av_ti.get_ad(symbol=self.ticker, interval=interval)
 
     # TODO: ADOSC
 

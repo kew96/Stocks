@@ -168,7 +168,7 @@ class Stock:
     @staticmethod
     def __check_convert(entry, options):
         if type(entry) in (int, float):
-            entry = int(entry)
+            return int(entry)
         else:
             if ' ' in entry:
                 if entry[:4].lower() == 'mesa':

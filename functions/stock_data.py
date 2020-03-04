@@ -54,37 +54,28 @@ class Stock:
             raise NoTickerError()
 
     def __check_size(self):
-        self.size = self.size.lower()
-        if self.size not in ['compact', 'full']:
-            raise WrongFormatError(self.size)
-
-    @staticmethod
-    def __create_output_question(choice, options):
-        print('"'+choice+'" is not a valid option.')
-        output = 'Please choose one of the following options by number: \n'
-        for i, o in enumerate(options):
-            output = output + str(i+1) + '. ' + o + '\n'
-        index = int(input(output)) - 1
-        return options[index]
+        pass
+    # TODO: check that size is either 'compact' or 'full'
 
     @Alias('sma', 'SMA')
     def simple_moving_average(self, period='daily', data_type='close'):
-        """
-        :param period: a string defining the period of each average the options are:
-                        ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
-        :param data_type: a string defining which values (for 'daily', 'weekly', 'monthly') to use.
-                    The options are the following: ['close', 'open', 'high', 'low']
-        :return: returns a dataframe with a datetime index and floats for values
-        """
         period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
         type_options = ['close', 'open', 'high', 'low']
         if period not in period_options:
-            period = self.__create_output_question(period, period_options)
+            print('"' + period + '" is not a valid period.')
+            output = 'Please select one of the following period options: '
+            for o in period_options:
+                output = output + o + ' '
+            period = input(output)
         if data_type not in type_options:
-            data_type = self.__create_output_question(data_type, type_options)
+            print('"' + data_type + '" is not a valid data point type.')
+            output = 'Please select one of the following data point type options: '
+            for o in type_options:
+                output = output + o + ' '
+            data_type = input(output)
         return av_ti.get_sma(symbol=self.ticker, interval=period, time_period=200, series_type=data_type)
 
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s.sma('1'))
+    print(s.sma('1min'))

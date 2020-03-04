@@ -4,5 +4,5 @@ class NoTickerError(BaseException):
 
 
 class WrongFormatError(BaseException):
-    def __init__(self, input):
-        print('{} is not a valid format. Please use either "compact" or "full".'.format(input))
+    def __init__(self, form):
+        print('{} is not a valid format. Please use either "compact" or "full".'.format(form))

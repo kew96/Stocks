@@ -58,7 +58,27 @@ class Stock(models.Model):
     pass
 
 
-class Trade(models.Model):
+class Trade(PolymorphicModel):
     # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
+    # TODO: finish
+    pass
+
+
+class Long(Trade):
+    # TODO: finish
+    pass
+
+
+class Short(Trade):
+    # TODO: finish
+    pass
+
+
+class Put(Trade):
+    # TODO: finish
+    pass
+
+
+class Call(Trade):
     # TODO: finish
     pass

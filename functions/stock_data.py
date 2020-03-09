@@ -331,3 +331,29 @@ class Stock:
     # TODO: HT_DCPHASE
 
     # TODO: HT_PHASOR
+
+        pass
+    # TODO: check that size is either 'compact' or 'full'
+
+    @Alias('sma', 'SMA')
+    def simple_moving_average(self, period='daily', data_type='close'):
+        period_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']
+        type_options = ['close', 'open', 'high', 'low']
+        if period not in period_options:
+            print('"' + period + '" is not a valid period.')
+            output = 'Please select one of the following period options: '
+            for o in period_options:
+                output = output + o + ' '
+            period = input(output)
+        if data_type not in type_options:
+            print('"' + data_type + '" is not a valid data point type.')
+            output = 'Please select one of the following data point type options: '
+            for o in type_options:
+                output = output + o + ' '
+            data_type = input(output)
+        return av_ti.get_sma(symbol=self.ticker, interval=period, time_period=200, series_type=data_type)
+
+
+if __name__ == '__main__':
+    s = Stock('AAPL')
+    print(s.sma('1min'))

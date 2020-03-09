@@ -53,13 +53,9 @@ class StockActivity(models.Model):
     subtype = models.CharField(default=buy, choices=subchoices)
 
 
-class Stock(models.Model):
-    # TODO: finish
-    pass
-
-
 class Trade(PolymorphicModel):
     # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
+    id = models.AutoField(primary_key=True)
     # TODO: finish
     pass
 
@@ -80,5 +76,13 @@ class Put(Trade):
 
 
 class Call(Trade):
+    # TODO: finish
+    pass
+
+
+class Stock(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField()
+    trades = models.ManyToManyField(Trade, related_name='stock')
     # TODO: finish
     pass

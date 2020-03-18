@@ -1,9 +1,9 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from polymorphic.models import PolymorphicModel
 
-from datetime import date
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 
 
 # Create your models here.
@@ -12,77 +12,70 @@ from datetime import date
 class Portfolio(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, default='Test')
-    cash = models.FloatField()
+    cash = models.DecimalField(decimal_places=2, max_digits=100)
     inception = models.DateField(default=date.today())
 
     def __str__(self):
-        return self.name
+        return f'{self.name} ${self.total_value()}'
 
-    # TODO: total value
+    def total_value(self):  # TODO: total value
+        return self.cash
 
     # TODO: period performance
 
     # TODO: overall performance
 
 
-class StockActivity(models.Model):
-    long = 'Long'
-    short = 'Short'
-    put = 'Put'
-    call = 'Call'
-
-    choices = (
-        (long, 'Long'),
-        (short, 'Short'),
-        (put, 'Put'),
-        (call, 'Call')
-    )
+class Trade(PolymorphicModel):  # TODO: finish
+    # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
 
     buy = 'Buy'
     sell = 'Sell'
 
-    subchoices = (
+    choices = (
         (buy, 'Buy'),
         (sell, 'Sell')
     )
 
     id = models.AutoField(primary_key=True)
-    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='activity')
-    trade = models.ForeignKey('Trade', on_delete=models.CASCADE)
-    type = models.CharField(default=long, choices=choices)
-    subtype = models.CharField(default=buy, choices=subchoices)
+    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='trades')
+    type = models.CharField(max_length=4, default=buy, choices=choices)
+    initiated = models.DateTimeField(default=datetime.now())
+    closed = models.DateTimeField(blank=True)
+    reason = models.TextField()
 
 
-class Trade(PolymorphicModel):
-    # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
-    id = models.AutoField(primary_key=True)
-    # TODO: finish
-    pass
+class Long(Trade):  # TODO: finish
+
+    def __str__(self):
+        return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
 
-class Long(Trade):
-    # TODO: finish
-    pass
+class Short(Trade):  # TODO: finish
+
+    def __str__(self):
+        return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
 
-class Short(Trade):
-    # TODO: finish
-    pass
+class Put(Trade):  # TODO: finish
+    expiration = models.DateField(default=date.today() + relativedelta(months=3))
+    strike = models.DecimalField(decimal_places=2, max_digits=100)
+
+    def __str__(self):
+        return f'{self.stock.ticker}-Put-{self.type}({self.expiration})-{self.strike}'
 
 
-class Put(Trade):
-    # TODO: finish
-    pass
+class Call(Trade):  # TODO: finish
+    expiration = models.DateField(default=date.today() + relativedelta(months=3))
+    strike = models.DecimalField(decimal_places=2, max_digits=100)
+
+    def __str__(self):
+        return f'{self.stock.ticker}-Call-{self.type}({self.expiration})-{self.strike}'
 
 
-class Call(Trade):
-    # TODO: finish
-    pass
+class Stock(models.Model):  # TODO: finish
+    ticker = models.CharField(max_length=10, unique=True, primary_key=True)
+    name = models.CharField(max_length=200, unique=True)
 
-
-class Stock(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField()
-    trades = models.ManyToManyField(Trade, related_name='stock')
-    # TODO: finish
-    pass
+    def __str__(self):
+        return self.ticker

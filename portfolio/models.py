@@ -4,6 +4,12 @@ from polymorphic.models import PolymorphicModel
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+from decimal import *
+
+from errors import NoTickerError
+from functions import stock_data
+
+getcontext().prec = 2
 
 
 # Create your models here.
@@ -18,15 +24,17 @@ class Portfolio(models.Model):
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
 
-    def total_value(self):  # TODO: total value
-        return self.cash
+    def total_value(self):
+        open_trades = Trade.objects.filter(closed__isnull=True)
+        unrealized_gains = sum([trade.current_value() for trade in open_trades])
+        return self.cash + unrealized_gains
 
     # TODO: period performance
 
     # TODO: overall performance
 
 
-class Trade(PolymorphicModel):  # TODO: finish
+class Trade(PolymorphicModel):
     # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
 
     buy = 'Buy'
@@ -40,46 +48,111 @@ class Trade(PolymorphicModel):  # TODO: finish
     id = models.AutoField(primary_key=True)
     stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='trades')
     type = models.CharField(max_length=4, default=buy, choices=choices)
+    initial_price = models.DecimalField(decimal_places=2, max_digits=100, default=0)
+    shares = models.IntegerField(default=0)
     fee_rate = models.IntegerField(default=0)
-    fee_cost = models.DecimalField(decimal_places=2, max_digits=100)
-    trade_cost = models.DecimalField(decimal_places=2, max_digits=100)
-    total_cost = models.DecimalField(decimal_places=2, max_digits=100)
+    fee_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
+    trade_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
+    total_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     initiated = models.DateTimeField(default=datetime.now())
-    closed = models.DateTimeField(blank=True)
-    reason = models.TextField()
+    closed = models.DateTimeField(blank=True, null=True)
+    gain_loss = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
+    reason = models.TextField(default='NA')
 
 
-class Long(Trade):  # TODO: finish
+class Long(Trade):
 
     def __str__(self):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
+    def current_value(self):
+        dummy = stock_data.Stock(self.stock.ticker)
+        current_price = Decimal(dummy.current['05. price'])
+        return current_price - Decimal(str(self.initial_price))
 
-class Short(Trade):  # TODO: finish
+
+# noinspection PyUnresolvedReferences
+class Short(Trade):
 
     def __str__(self):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
+    def current_value(self):
+        dummy = Stock(self.stock.ticker)
+        current_price = Decimal(dummy.current['05. price'])
+        return Decimal(str(self.initial_price)) - current_price
 
-class Put(Trade):  # TODO: finish
+
+class Option(Trade):
     expiration = models.DateField(default=date.today() + relativedelta(months=3))
     strike = models.DecimalField(decimal_places=2, max_digits=100)
+    option_cost = models.DecimalField(decimal_places=2, max_digits=100)
+
+
+# noinspection PyUnresolvedReferences
+class LongPut(Option):
 
     def __str__(self):
-        return f'{self.stock.ticker}-Put-{self.type}({self.expiration})-{self.strike}'
+        return f'{self.stock.ticker}-LongPut-{self.type}({self.expiration})-{self.strike}'
+
+    def current_value(self):
+        dummy = Stock(self.stock.ticker)
+        current_price = Decimal(dummy.current['05. price'])
+        option_value = self.strike - current_price - self.option_cost
+        return max(option_value, self.option_cost)
 
 
-class Call(Trade):  # TODO: finish
-    expiration = models.DateField(default=date.today() + relativedelta(months=3))
-    strike = models.DecimalField(decimal_places=2, max_digits=100)
+# noinspection PyUnresolvedReferences
+class LongCall(Option):
 
     def __str__(self):
-        return f'{self.stock.ticker}-Call-{self.type}({self.expiration})-{self.strike}'
+        return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
+
+    def current_value(self):
+        dummy = Stock(self.stock.ticker)
+        current_price = Decimal(dummy.current['05. price'])
+        option_value = current_price - self.strike - self.option_cost
+        return max(option_value, self.option_cost)
+
+
+# noinspection PyUnresolvedReferences
+class ShortPut(Option):
+
+    def __str__(self):
+        return f'{self.stock.ticker}-ShortPut-{self.type}({self.expiration})-{self.strike}'
+
+    def current_value(self):
+        dummy = Stock(self.stock.ticker)
+        current_price = Decimal(dummy.current['05. price'])
+        option_value = current_price - self.strike + self.option_cost
+        return min(option_value, self.option_cost)
+
+
+# noinspection PyUnresolvedReferences
+class ShortCall(Option):
+
+    def __str__(self):
+        return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
+
+    def current_value(self):
+        stock = Stock(self.stock.ticker)
+        current_price = Decimal(stock.current['05. price'])
+        option_value = self.strike - current_price + self.option_cost
+        return min(option_value, self.option_cost)
 
 
 class Stock(models.Model):  # TODO: finish
-    ticker = models.CharField(max_length=10, unique=True, primary_key=True)
-    name = models.CharField(max_length=200, unique=True)
+    ticker = models.CharField(default='None', max_length=10, unique=True, primary_key=True)
+    name = models.CharField(default='None', max_length=200, unique=True)
 
     def __str__(self):
         return self.ticker
+
+    def save(self, *args, **kwargs):
+        if self.ticker == 'None' and self.name == 'None':
+            raise NoTickerError()
+        elif self.ticker == 'None':
+            self.ticker = stock_data.ticker_search(self.name)[0][0]['1. symbol']
+        elif self.name == 'None':
+            self.name = stock_data.ticker_search(self.ticker)[0][0]['2. name']
+        super().save(*args, **kwargs)

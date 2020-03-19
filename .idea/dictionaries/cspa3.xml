@@ -14,6 +14,7 @@
       <w>dcphase</w>
       <w>dema</w>
       <w>fastperiod</w>
+      <w>intra</w>
       <w>macd</w>
       <w>macdext</w>
       <w>matype</w>
@@ -23,6 +24,7 @@
       <w>nbdevup</w>
       <w>pewceosfc</w>
       <w>phasor</w>
+      <w>prec</w>
       <w>rocr</w>
       <w>signalperiod</w>
       <w>slowperiod</w>

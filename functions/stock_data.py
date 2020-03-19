@@ -22,8 +22,9 @@ class Stock:
         self.__set_name_ticker()
         self.size = size
         self.__check_size()
-        self.now_data, self.now_meta = av_ts.get_intraday(symbol=self.ticker, outputsize=size, interval='1min')
+        self.intra_data, self.intra_meta = av_ts.get_intraday(symbol=self.ticker, outputsize=size, interval='1min')
         self.daily_data, self.daily_meta = av_ts.get_daily_adjusted(symbol=self.ticker, outputsize=size)
+        self.current, _ = av_ts.get_quote_endpoint(symbol=self.ticker)
 
     def __set_name_ticker(self):
         if self.ticker is None and self.name is None:
@@ -356,4 +357,4 @@ class Stock:
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s.sma('1min'))
+    print(s.current)

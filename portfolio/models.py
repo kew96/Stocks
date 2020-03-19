@@ -71,7 +71,6 @@ class Long(Trade):
         return current_price - Decimal(str(self.initial_price))
 
 
-# noinspection PyUnresolvedReferences
 class Short(Trade):
 
     def __str__(self):
@@ -89,7 +88,6 @@ class Option(Trade):
     option_cost = models.DecimalField(decimal_places=2, max_digits=100)
 
 
-# noinspection PyUnresolvedReferences
 class LongPut(Option):
 
     def __str__(self):
@@ -102,7 +100,6 @@ class LongPut(Option):
         return max(option_value, self.option_cost)
 
 
-# noinspection PyUnresolvedReferences
 class LongCall(Option):
 
     def __str__(self):
@@ -115,7 +112,6 @@ class LongCall(Option):
         return max(option_value, self.option_cost)
 
 
-# noinspection PyUnresolvedReferences
 class ShortPut(Option):
 
     def __str__(self):
@@ -128,7 +124,6 @@ class ShortPut(Option):
         return min(option_value, self.option_cost)
 
 
-# noinspection PyUnresolvedReferences
 class ShortCall(Option):
 
     def __str__(self):
@@ -144,6 +139,19 @@ class ShortCall(Option):
 class Stock(models.Model):  # TODO: finish
     ticker = models.CharField(default='None', max_length=10, unique=True, primary_key=True)
     name = models.CharField(default='None', max_length=200, unique=True)
+    sector = models.CharField(default='NA', max_length=100)
+    industry = models.CharField(default='NA', max_length=300)
+    dividend_rate = models.DecimalField(decimal_places=2, max_digits=100)
+    beta = models.DecimalField(decimal_places=6, max_digits=100)
+    trailing_PE = models.DecimalField(decimal_places=6, max_digits=100)
+    market_cap = models.PositiveIntegerField()
+    price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
+    forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
+    tradeable = models.BooleanField(default=True)
+    dividend_yield = models.DecimalField(decimal_places=6, max_digits=100)
+    forward_EPS = models.DecimalField(decimal_places=2, max_digits=100)
+    profit_margin = models.DecimalField(decimal_places=10, max_digits=100)
+    trailing_EPS = models.DecimalField(decimal_places=6, max_digits=100)
 
     def __str__(self):
         return self.ticker

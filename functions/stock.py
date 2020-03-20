@@ -154,6 +154,44 @@ class Stock:
 
     # TODO: PLUS_DM
 
+    @Alias('bbands', 'BBANDS', 'Bollinger_bands')
+    def bollinger_bands(self):  # TODO: implement
+        pass
+
+    # TODO: MIDPOINT
+
+    # TODO: MIDPRICE
+
+    # TODO: SAR
+
+    # TODO: TRANGE
+
+    # TODO: ATR
+
+    # TODO: NATR
+
+    @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
+    def chaikin_ad_line_values(self):  # TODO: implement
+        pass
+
+    # TODO: ADOSC
+
+    @Alias('obv', 'OBV', 'balance_volume')
+    def on_balance_volume(self):  # TODO: implement
+        pass
+
+    # TODO: HT_TRENDLINE
+
+    # TODO: HT_SINE
+
+    # TODO: HT_TRENDMODE
+
+    # TODO: HT_DCPERIOD
+
+    # TODO: HT_DCPHASE
+
+    # TODO: HT_PHASOR
+
 
 if __name__ == '__main__':
     s = Stock('AAPL')

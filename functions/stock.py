@@ -51,9 +51,9 @@ class Stock:
             self.forward_PE = self.__info['forwardPE']
             self.tradeable = self.__info['tradeable']
             self.dividend_yield = self.__info['dividendYield']
-            self.forward_EPS = self.__info['forwardEPS']
+            self.forward_EPS = self.__info['forwardEps']
             self.profit_margin = self.__info['profitMargins']
-            self.trailing_EPS = self.__info['trailingEPS']
+            self.trailing_EPS = self.__info['trailingEps']
             self.actions = self.__obj.actions
             self.dividends = self.__obj.dividends
             self.splits = self.__obj.splits
@@ -251,4 +251,4 @@ class Stock:
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s)
+    print(s.recommendations)

@@ -1,12 +1,11 @@
 from alpha_vantage.timeseries import TimeSeries
-from alpha_vantage.techindicators import TechIndicators
 from errors import *
 from alias import *
-import numpy as np
+from helper_functions.stock_helpers import *
+import yfinance
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
 av_ts = TimeSeries(alpha_vantage_KEY)
-av_ti = TechIndicators(alpha_vantage_KEY, output_format='pandas')
 
 
 def ticker_search(name):
@@ -16,22 +15,79 @@ def ticker_search(name):
 @aliased
 class Stock:
 
-    def __init__(self, ticker=None, name=None, start=None, end=None):
+    def __init__(self, ticker=None, name=None, start=None, end=None, interval=None, period=None, verbose=True):
         self.ticker = ticker
         self.name = name
-        self.start = start
-        self.end = end
-        self.historical = False if start is None and end is None else True
+        self.historical = False if start is None and end is None or period is None else True
+        self.__dates_bool = False if start is None and end is None else True
+        self.__period_bool = False if period is None else True
+        if self.__dates_bool:
+            self.start = check_convert_date(start, 'start')
+            self.end = check_convert_date(end, 'end')
+        elif self.__period_bool:
+            self.__period_options = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
+            self.period = check_list_options(period, self.__period_options, 'period')
+        if self.historical:
+            self.__interval_options = ['1m', '2m', '5m', '15m', '30m', '60m',
+                                       '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo']
+            self.interval = check_list_options(interval, self.__interval_options, 'interval')
         self.__set_name_ticker()
-        # self.__check_size()
-        # self.intra_data, self.intra_meta = av_ts.get_intraday(symbol=self.ticker, outputsize=size, interval='1min')
-        # self.daily_data, self.daily_meta = av_ts.get_daily_adjusted(symbol=self.ticker, outputsize=size)
-        # self.current, _ = av_ts.get_quote_endpoint(symbol=self.ticker)
+        self.__obj = yfinance.Ticker(self.ticker)
+        if self.__period_bool:
+            self.__info = self.__obj.historical(period=self.period, interval=self.interval)
+        elif self.__dates_bool:
+            self.__info = self.__obj.historical(start=self.start, end=self.end, interval=self.interval)
+        else:
+            self.__info = self.__obj.info
+        self.summary = self.__info['longBusinessSummary']
+        self.sector = self.__info['sector']
+        self.industry = self.__info['industry']
+        if verbose:
+            self.dividend_rate = self.__info['dividendRate']
+            self.beta = self.__info['beta']
+            self.trailing_PE = self.__info['trailingPE']
+            self.market_cap = self.__info['marketCap']
+            self.price_to_sales_12m = self.__info['priceToSalesTrailing12Months']
+            self.forward_PE = self.__info['forwardPE']
+            self.tradeable = self.__info['tradeable']
+            self.dividend_yield = self.__info['dividendYield']
+            self.forward_EPS = self.__info['forwardEPS']
+            self.profit_margin = self.__info['profitMargins']
+            self.trailing_EPS = self.__info['trailingEPS']
+            self.actions = self.__obj.actions
+            self.dividends = self.__obj.dividends
+            self.splits = self.__obj.splits
+            self.financials = self.__obj.financials
+            self.quarterly_financials = self.__obj.quarterly_financials
+            self.major_holders = self.__obj.major_holders
+            self.institutional_holders = self.__obj.institutional_holders
+            self.balance_sheet = self.__obj.balance_sheet
+            self.quarterly_balance_sheet = self.__obj.quarterly_balance_sheet
+            self.cashflow = self.__obj.cashflow
+            self.quarterly_cashflow = self.__obj.quarterly_cashflow
+            self.sustainability = self.__obj.sustainability
+            self.recommendations = self.__obj.recommendations
+            self.next_event = self.__obj.calendar
+            self.option_expirations = self.__obj.options
 
     def __str__(self):
         if self.historical:
             return self.ticker + f' Historical:{self.historical} ({self.start}-{self.end}'
         return self.ticker
+
+    def get_calls(self, dt):
+        dt = check_convert_date(dt, 'option expiration date')
+        dt = dt.strftime('%Y-%m-%d')
+        dt = check_list_options(dt, self.option_expirations, 'option expiration date')
+        opt = self.__obj.option_chain(dt)
+        return opt.calls
+
+    def get_puts(self, dt):
+        dt = check_convert_date(dt, 'option expiration date')
+        dt = dt.strftime('%Y-%m-%d')
+        dt = check_list_options(dt, self.option_expirations, 'option expiration date')
+        opt = self.__obj.option_chain(dt)
+        return opt.puts
 
     def __set_name_ticker(self):
         if self.ticker is None and self.name is None:
@@ -195,4 +251,4 @@ class Stock:
 
 if __name__ == '__main__':
     s = Stock('AAPL')
-    print(s.historical)
+    print(s)

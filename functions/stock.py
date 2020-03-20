@@ -15,22 +15,9 @@ def ticker_search(name):
 @aliased
 class Stock:
 
-    def __init__(self, ticker=None, name=None, start=None, end=None, interval=None, period=None, verbose=True):
+    def __init__(self, ticker=None, name=None, verbose=True):
         self.ticker = ticker
         self.name = name
-        self.historical = False if start is None and end is None and period is None else True
-        self.__dates_bool = False if start is None and end is None else True
-        self.__period_bool = False if period is None else True
-        if self.__dates_bool:
-            self.start = check_convert_date(start, 'start')
-            self.end = check_convert_date(end, 'end')
-        elif self.__period_bool:
-            self.__period_options = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
-            self.period = check_list_options(period, self.__period_options, 'period')
-        if self.historical:
-            self.__interval_options = ['1m', '2m', '5m', '15m', '30m', '60m',
-                                       '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo']
-            self.interval = check_list_options(interval, self.__interval_options, 'interval')
         self.__set_name_ticker()
         self.__obj = yfinance.Ticker(self.ticker)
         if self.__period_bool:
@@ -116,6 +103,37 @@ class Stock:
             self.name = pick['2. name']
         else:
             raise NoTickerError
+
+    @property
+    def _get_info(self):
+        print(self.__gen_info)
+
+
+class HistoricalStock(Stock):
+
+    def __init__(self, ticker=None, name=None, start=None, end=None, period=None, interval='1d', verbose=True):
+        super().__init__(ticker, name, verbose)
+        self.__dates_bool = False if start is None and end is None else True
+        self.__period_bool = False if period is None else True
+        if self.__dates_bool:
+            self.start = check_convert_date(start, 'start')
+            self.end = check_convert_date(end, 'end')
+        elif self.__period_bool:
+            self.__period_options = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
+            self.period = check_list_options(period, self.__period_options, 'period')
+        self.__interval_options = ['1m', '2m', '5m', '15m', '30m', '60m',
+                                   '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo']
+        self.interval = check_list_options(interval, self.__interval_options, 'interval')
+        if self.__period_bool:
+            self.__hist_info = self.__obj.history(period=self.period, interval=self.interval)
+        elif self.__dates_bool:
+            self.__hist_info = self.__obj.history(start=self.start, end=self.end, interval=self.interval)
+
+    def __str__(self):
+        if self.__dates_bool:
+            return self.ticker + f' dates: {self.start}-{self.end} ({self.interval})'
+        else:
+            return self.ticker + f' period: {self.period} ({self.interval})'
 
     @Alias('sma', 'SMA')
     def simple_moving_average(self):  # TODO: implement
@@ -251,10 +269,11 @@ class Stock:
 
     # TODO: HT_PHASOR
 
-    def _get_info(self):
-        print(self.__gen_info)
+    @property
+    def get_hist(self):
+        print(self.__hist_info)
 
 
 if __name__ == '__main__':
-    s = Stock('MSFT', period='1mo', interval='1wk')
-    print(s.financials)
+    s = HistoricalStock('MSFT', period='1mo')
+    print(s.get_hist)

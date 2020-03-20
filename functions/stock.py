@@ -63,8 +63,96 @@ class Stock:
             raise NoTickerError
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self):
+    def simple_moving_average(self):  # TODO: implement
         pass
+
+    @Alias('ema', 'EMA')
+    def exponential_moving_average(self):  # TODO: implement
+        pass
+
+    # TODO: WMA
+
+    # TODO: DEMA
+
+    # TODO: TEMA
+
+    # TODO: TRIMA
+
+    # TODO: KAMA
+
+    # TODO: MAMA
+
+    @Alias('vwap', 'VWAP')
+    def volume_weighted_average_price(self):  # TODO: implement
+        pass
+
+    # TODO: T3
+
+    @Alias('macd', 'MACD')
+    def moving_average_convergence_divergence(self):  # TODO: implement
+        pass
+
+    # TODO: MACDEXT
+
+    @Alias('stoch', 'STOCH', 'stoch_oscillator')
+    def stochastic_oscillator(self):  # TODO: implement
+        pass
+
+    # TODO: STOCHF
+
+    @Alias('rsi', 'RSI', 'relative_strength')
+    def relative_strength_index(self):  # TODO: implement
+        pass
+
+    # TODO: STOCHRSI
+
+    # TODO: WILLR
+
+    @Alias('adx', 'ADX', 'average_directional_movement')
+    def average_directional_movement_index(self):  # TODO: implement
+        pass
+
+    # TODO: ADXR
+
+    # TODO: APO
+
+    # TODO: PPO
+
+    # TODO: MOM
+
+    # TODO: BOP
+
+    @Alias('cci', 'CCI', 'commodity_channel')
+    def commodity_channel_index(self):  # TODO: implement
+        pass
+
+    # TODO: CMO
+
+    # TODO: ROC
+
+    # TODO: ROCR
+
+    @Alias('Aroon', 'AROON')
+    def aroon(self):  # TODO: implement
+        pass
+
+    # TODO: AROONOSC
+
+    # TODO: MFI
+
+    # TODO: TRIX
+
+    # TODO: ULTOSC
+
+    # TODO: DX
+
+    # TODO: MINUS_DI
+
+    # TODO: PLUS_DI
+
+    # TODO: MINUS_DM
+
+    # TODO: PLUS_DM
 
 
 if __name__ == '__main__':

@@ -314,7 +314,6 @@ class Stock:
 
     # TODO: ADOSC
 
-    # TODO: OBV*
     @Alias('obv', 'OBV', 'balance_volume')
     def on_balance_volume(self, interval='daily'):
         interval_options = ['1min', '5min', '15min', '30min', '60min', 'daily', 'weekly', 'monthly']

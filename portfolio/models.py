@@ -1,8 +1,8 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
-from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from decimal import *
 
@@ -19,7 +19,7 @@ class Portfolio(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, default='Test')
     cash = models.DecimalField(decimal_places=2, max_digits=100)
-    inception = models.DateField(default=date.today())
+    inception = models.DateField(default=timezone.now())
 
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
@@ -54,7 +54,7 @@ class Trade(PolymorphicModel):
     fee_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     trade_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     total_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
-    initiated = models.DateTimeField(default=datetime.now())
+    initiated = models.DateTimeField(default=timezone.now())
     closed = models.DateTimeField(blank=True, null=True)
     gain_loss = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
     reason = models.TextField(default='NA')
@@ -83,7 +83,7 @@ class Short(Trade):
 
 
 class Option(Trade):
-    expiration = models.DateField(default=date.today() + relativedelta(months=3))
+    expiration = models.DateField(default=timezone.now() + relativedelta(months=3))
     strike = models.DecimalField(decimal_places=2, max_digits=100)
     option_cost = models.DecimalField(decimal_places=2, max_digits=100)
 
@@ -141,17 +141,17 @@ class Stock(models.Model):  # TODO: finish
     name = models.CharField(default='None', max_length=200, unique=True)
     sector = models.CharField(default='NA', max_length=100)
     industry = models.CharField(default='NA', max_length=300)
-    dividend_rate = models.DecimalField(decimal_places=2, max_digits=100)
-    beta = models.DecimalField(decimal_places=6, max_digits=100)
-    trailing_PE = models.DecimalField(decimal_places=6, max_digits=100)
-    market_cap = models.PositiveIntegerField()
-    price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
-    forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
+    dividend_rate = models.DecimalField(null=True, decimal_places=2, max_digits=100)
+    beta = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+    trailing_PE = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+    market_cap = models.PositiveIntegerField(null=True)
+    price_to_sales_12m = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+    forward_PE = models.DecimalField(null=True, decimal_places=6, max_digits=100)
     tradeable = models.BooleanField(default=True)
-    dividend_yield = models.DecimalField(decimal_places=6, max_digits=100)
-    forward_EPS = models.DecimalField(decimal_places=2, max_digits=100)
-    profit_margin = models.DecimalField(decimal_places=10, max_digits=100)
-    trailing_EPS = models.DecimalField(decimal_places=6, max_digits=100)
+    dividend_yield = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+    forward_EPS = models.DecimalField(null=True, decimal_places=2, max_digits=100)
+    profit_margin = models.DecimalField(null=True, decimal_places=10, max_digits=100)
+    trailing_EPS = models.DecimalField(null=True, decimal_places=6, max_digits=100)
 
     def __str__(self):
         return self.ticker

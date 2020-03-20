@@ -70,6 +70,8 @@ class Stock:
             self.option_expirations = self.__obj.options
 
     def __str__(self):
+        if self.historical:
+            return self.ticker + f' Historical:{self.historical} ({self.start}-{self.end})'
         return self.ticker
 
     def get_calls(self, dt):
@@ -139,34 +141,30 @@ class Stock:
 
     # TODO: MAMA
 
+    # TODO: T3
+
     @Alias('macd', 'MACD')
     def moving_average_convergence_divergence(self):  # TODO: implement
         pass
 
-    # TODO: T3
+    # TODO: MACDEXT
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
     def stochastic_oscillator(self):  # TODO: implement
         pass
 
-    # TODO: MACDEXT
+    # TODO: STOCHF
 
     @Alias('rsi', 'RSI', 'relative_strength')
     def relative_strength_index(self):  # TODO: implement
-        pass
-
-    # TODO: STOCHF
-
-    @Alias('adx', 'ADX', 'average_directional_movement')
-    def average_directional_movement_index(self):  # TODO: implement
         pass
 
     # TODO: STOCHRSI
 
     # TODO: WILLR
 
-    @Alias('cci', 'CCI', 'commodity_channel')
-    def commodity_channel_index(self):  # TODO: implement
+    @Alias('adx', 'ADX', 'average_directional_movement')
+    def average_directional_movement_index(self):  # TODO: implement
         pass
 
     # TODO: ADXR
@@ -179,8 +177,8 @@ class Stock:
 
     # TODO: BOP
 
-    @Alias('Aroon', 'AROON')
-    def aroon(self):  # TODO: implement
+    @Alias('cci', 'CCI', 'commodity_channel')
+    def commodity_channel_index(self):  # TODO: implement
         pass
 
     # TODO: CMO
@@ -189,8 +187,8 @@ class Stock:
 
     # TODO: ROCR
 
-    @Alias('bbands', 'BBANDS', 'Bollinger_bands')
-    def bollinger_bands(self):  # TODO: implement
+    @Alias('Aroon', 'AROON')
+    def aroon(self):  # TODO: implement
         pass
 
     # TODO: AROONOSC
@@ -215,6 +213,10 @@ class Stock:
     def chaikin_ad_line_values(self):  # TODO: implement
         pass
 
+    @Alias('bbands', 'BBANDS', 'Bollinger_bands')
+    def bollinger_bands(self):  # TODO: implement
+        pass
+
     # TODO: MIDPOINT
 
     # TODO: MIDPRICE
@@ -227,11 +229,15 @@ class Stock:
 
     # TODO: NATR
 
-    @Alias('obv', 'OBV', 'balance_volume')
-    def on_balance_volume(self):  # TODO: implement
+    @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
+    def chaikin_ad_line_values(self):  # TODO: implement
         pass
 
     # TODO: ADOSC
+
+    @Alias('obv', 'OBV', 'balance_volume')
+    def on_balance_volume(self):  # TODO: implement
+        pass
 
     # TODO: HT_TRENDLINE
 

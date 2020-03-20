@@ -18,7 +18,7 @@ class Stock:
     def __init__(self, ticker=None, name=None, start=None, end=None, interval=None, period=None, verbose=True):
         self.ticker = ticker
         self.name = name
-        self.historical = False if start is None and end is None or period is None else True
+        self.historical = False if start is None and end is None and period is None else True
         self.__dates_bool = False if start is None and end is None else True
         self.__period_bool = False if period is None else True
         if self.__dates_bool:
@@ -34,26 +34,25 @@ class Stock:
         self.__set_name_ticker()
         self.__obj = yfinance.Ticker(self.ticker)
         if self.__period_bool:
-            self.__info = self.__obj.historical(period=self.period, interval=self.interval)
+            self.__hist_info = self.__obj.history(period=self.period, interval=self.interval)
         elif self.__dates_bool:
-            self.__info = self.__obj.historical(start=self.start, end=self.end, interval=self.interval)
-        else:
-            self.__info = self.__obj.info
-        self.summary = self.__info['longBusinessSummary']
-        self.sector = self.__info['sector']
-        self.industry = self.__info['industry']
+            self.__hist_info = self.__obj.history(start=self.start, end=self.end, interval=self.interval)
+        self.__gen_info = self.__obj.info
+        self.summary = self.__gen_info['longBusinessSummary']
+        self.sector = self.__gen_info['sector']
+        self.industry = self.__gen_info['industry']
         if verbose:
-            self.dividend_rate = self.__info['dividendRate']
-            self.beta = self.__info['beta']
-            self.trailing_PE = self.__info['trailingPE']
-            self.market_cap = self.__info['marketCap']
-            self.price_to_sales_12m = self.__info['priceToSalesTrailing12Months']
-            self.forward_PE = self.__info['forwardPE']
-            self.tradeable = self.__info['tradeable']
-            self.dividend_yield = self.__info['dividendYield']
-            self.forward_EPS = self.__info['forwardEps']
-            self.profit_margin = self.__info['profitMargins']
-            self.trailing_EPS = self.__info['trailingEps']
+            self.dividend_rate = self.__gen_info['dividendRate']
+            self.beta = self.__gen_info['beta']
+            self.trailing_PE = self.__gen_info['trailingPE']
+            self.market_cap = self.__gen_info['marketCap']
+            self.price_to_sales_12m = self.__gen_info['priceToSalesTrailing12Months']
+            self.forward_PE = self.__gen_info['forwardPE']
+            self.tradeable = self.__gen_info['tradeable']
+            self.dividend_yield = self.__gen_info['dividendYield']
+            self.forward_EPS = self.__gen_info['forwardEps']
+            self.profit_margin = self.__gen_info['profitMargins']
+            self.trailing_EPS = self.__gen_info['trailingEps']
             self.actions = self.__obj.actions
             self.dividends = self.__obj.dividends
             self.splits = self.__obj.splits
@@ -248,7 +247,10 @@ class Stock:
 
     # TODO: HT_PHASOR
 
+    def _get_info(self):
+        print(self.__gen_info)
+
 
 if __name__ == '__main__':
-    s = Stock('AAPL')
-    print(s.recommendations)
+    s = Stock('MSFT', period='1mo', interval='1wk')
+    print(s.financials)

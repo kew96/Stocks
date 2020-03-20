@@ -30,7 +30,9 @@ def check_list_options(var, options, name):
         if var in options:
             return var
         else:
-            if var.lower() != 'help':
+            if var is None:
+                pass
+            elif var.lower() != 'help':
                 print('"' + var + '" is not a valid option.\n')
             try:
                 var = options[int(input(output)) - 1]

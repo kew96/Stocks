@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from decimal import *
 
 from errors import NoTickerError
-from functions import stock_data
+from functions import stock
 
 getcontext().prec = 2
 
@@ -66,7 +66,7 @@ class Long(Trade):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = stock_data.Stock(self.stock.ticker)
+        dummy = stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         return current_price - Decimal(str(self.initial_price))
 
@@ -77,7 +77,7 @@ class Short(Trade):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = Stock(self.stock.ticker)
+        dummy = stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         return Decimal(str(self.initial_price)) - current_price
 
@@ -160,7 +160,7 @@ class Stock(models.Model):  # TODO: finish
         if self.ticker == 'None' and self.name == 'None':
             raise NoTickerError()
         elif self.ticker == 'None':
-            self.ticker = stock_data.ticker_search(self.name)[0][0]['1. symbol']
+            self.ticker = stock.ticker_search(self.name)[0][0]['1. symbol']
         elif self.name == 'None':
-            self.name = stock_data.ticker_search(self.ticker)[0][0]['2. name']
+            self.name = stock.ticker_search(self.ticker)[0][0]['2. name']
         super().save(*args, **kwargs)

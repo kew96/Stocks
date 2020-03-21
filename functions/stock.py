@@ -51,7 +51,10 @@ class Stock:
             self.sustainability = self._obj.sustainability
             self.recommendations = self._obj.recommendations
             self.next_event = self._obj.calendar
-            self.option_expirations = self._obj.options
+            try:
+                self.option_expirations = self._obj.options
+            except IndexError:
+                self.option_expirations = None
 
     def __str__(self):
         if self.historical:
@@ -79,7 +82,9 @@ class Stock:
             vals = ticker_search(self.ticker)[0]
         else:
             vals = ticker_search(self.name)[0]
-        if float(vals[0]['9. matchScore']) > 0.7:
+        if len(vals) == 0:
+            print('No stocks found, please try again with a new ticker/name.')
+        elif float(vals[0]['9. matchScore']) > 0.7:
             self.ticker = vals[0]['1. symbol']
             self.name = vals[0]['2. name']
         elif float(vals[0]['9. matchScore'] > 0.3):
@@ -272,5 +277,5 @@ class HistoricalStock(Stock):
 
 
 if __name__ == '__main__':
-    s = HistoricalStock('MSFT', period='1mo')
+    s = HistoricalStock(name='daimler', period='1mo')
     print(s.get_hist)

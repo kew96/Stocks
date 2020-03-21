@@ -2,6 +2,7 @@ from alpha_vantage.timeseries import TimeSeries
 from errors import *
 from alias import *
 from helper_functions.stock_helpers import *
+import pandas as pd
 import yfinance
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
@@ -12,7 +13,6 @@ def ticker_search(name):
     return av_ts.get_symbol_search(name)
 
 
-@aliased
 class Stock:
 
     def __init__(self, ticker=None, name=None, verbose=True):
@@ -110,6 +110,7 @@ class Stock:
         return self.__gen_info
 
 
+@aliased
 class HistoricalStock(Stock):
 
     def __init__(self, ticker=None, name=None, start=None, end=None, period=None, interval='1d', verbose=True):
@@ -137,22 +138,25 @@ class HistoricalStock(Stock):
             return self.ticker + f' period: {self.period} ({self.interval})'
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self, num_periods=3, series_type='Close'):  # TODO: implement
+    def simple_moving_average(self, num_periods=3, series_type='Close'):
         assert num_periods > 0, 'num_periods must be greater than 0'
         series_options = ['Close', 'Open', 'High', 'Low']
         series_type = check_list_options(series_type, series_options, 'series type')
         return self.__hist_info.loc[:, series_type].rolling(window=num_periods).mean().iloc[num_periods - 1:]
 
     @Alias('ema', 'EMA')
-    def exponential_moving_average(self, num_periods=3, series_type='Close'):  # TODO: implement
+    def exponential_moving_average(self, num_periods=3, series_type='Close'):
         assert num_periods > 0, 'num_periods must be greater than 0'
         series_options = ['Close', 'Open', 'High', 'Low']
         series_type = check_list_options(series_type, series_options, 'series type')
         return self.__hist_info.loc[:, series_type].ewm(span=num_periods, adjust=False).mean().iloc[num_periods - 1:]
 
     @Alias('vwap', 'VWAP')
-    def volume_weighted_average_price(self):  # TODO: implement
-        pass
+    def volume_weighted_average_price(self):
+        cols = ['High', 'Low', 'Close']
+        typical_price = self.__hist_info.loc[:, cols].sum(axis=1).div(3)
+        vwap = typical_price * self.__hist_info.loc[:, 'Volume']
+        return pd.Series(vwap.values, self.__hist_info.index, name='VWAP')
 
     # TODO: WMA
 
@@ -282,6 +286,6 @@ class HistoricalStock(Stock):
 
 
 if __name__ == '__main__':
-    s = HistoricalStock('MSFT', period='1mo')
-    # print(s.get_hist)
-    print(s.exponential_moving_average())
+    s = HistoricalStock('MSFT', period='1d', interval='1m')
+    # print(type(s.get_hist.loc[:, ['High', 'Low', 'Close']].sum(axis=1).div(3)))
+    print(s.ema())

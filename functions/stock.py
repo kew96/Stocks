@@ -2,7 +2,6 @@ from alpha_vantage.timeseries import TimeSeries
 from errors import *
 from alias import *
 from helper_functions.stock_helpers import *
-import numpy as np
 import yfinance
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
@@ -138,12 +137,18 @@ class HistoricalStock(Stock):
             return self.ticker + f' period: {self.period} ({self.interval})'
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self):  # TODO: implement
-        pass
+    def simple_moving_average(self, num_periods=3, series_type='Close'):  # TODO: implement
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_options = ['Close', 'Open', 'High', 'Low']
+        series_type = check_list_options(series_type, series_options, 'series type')
+        return self.__hist_info.loc[:, series_type].rolling(window=num_periods).mean().iloc[num_periods - 1:]
 
     @Alias('ema', 'EMA')
-    def exponential_moving_average(self):  # TODO: implement
-        pass
+    def exponential_moving_average(self, num_periods=3, series_type='Close'):  # TODO: implement
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_options = ['Close', 'Open', 'High', 'Low']
+        series_type = check_list_options(series_type, series_options, 'series type')
+        return self.__hist_info.loc[:, series_type].ewm(span=num_periods, adjust=False).mean().iloc[num_periods - 1:]
 
     @Alias('vwap', 'VWAP')
     def volume_weighted_average_price(self):  # TODO: implement
@@ -277,5 +282,6 @@ class HistoricalStock(Stock):
 
 
 if __name__ == '__main__':
-    s = HistoricalStock(name='daimler', period='1mo')
-    print(s.get_hist)
+    s = HistoricalStock('MSFT', period='1mo')
+    # print(s.get_hist)
+    print(s.exponential_moving_average())

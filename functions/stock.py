@@ -56,8 +56,6 @@ class Stock:
                 self.option_expirations = None
 
     def __str__(self):
-        if self.historical:
-            return self.ticker + f' Historical:{self.historical} ({self.start}-{self.end})'
         return self.ticker
 
     def get_calls(self, dt):

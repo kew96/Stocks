@@ -1,4 +1,6 @@
 from alpha_vantage.timeseries import TimeSeries
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from errors import *
 from alias import *
 from helper_functions.stock_helpers import *
@@ -19,8 +21,8 @@ class Stock:
         self.ticker = ticker
         self.name = name
         self.__set_name_ticker()
-        self._obj = yfinance.Ticker(self.ticker)
-        self.__gen_info = self._obj.info
+        self.__obj = yfinance.Ticker(self.ticker)
+        self.__gen_info = self.__obj.info
         self.summary = self.__gen_info['longBusinessSummary']
         self.sector = self.__gen_info['sector']
         self.industry = self.__gen_info['industry']
@@ -36,22 +38,22 @@ class Stock:
             self.forward_EPS = self.__gen_info['forwardEps']
             self.profit_margin = self.__gen_info['profitMargins']
             self.trailing_EPS = self.__gen_info['trailingEps']
-            self.actions = self._obj.actions
-            self.dividends = self._obj.dividends
-            self.splits = self._obj.splits
-            self.financials = self._obj.financials
-            self.quarterly_financials = self._obj.quarterly_financials
-            self.major_holders = self._obj.major_holders
-            self.institutional_holders = self._obj.institutional_holders
-            self.balance_sheet = self._obj.balance_sheet
-            self.quarterly_balance_sheet = self._obj.quarterly_balance_sheet
-            self.cashflow = self._obj.cashflow
-            self.quarterly_cashflow = self._obj.quarterly_cashflow
-            self.sustainability = self._obj.sustainability
-            self.recommendations = self._obj.recommendations
-            self.next_event = self._obj.calendar
+            self.actions = self.__obj.actions
+            self.dividends = self.__obj.dividends
+            self.splits = self.__obj.splits
+            self.financials = self.__obj.financials
+            self.quarterly_financials = self.__obj.quarterly_financials
+            self.major_holders = self.__obj.major_holders
+            self.institutional_holders = self.__obj.institutional_holders
+            self.balance_sheet = self.__obj.balance_sheet
+            self.quarterly_balance_sheet = self.__obj.quarterly_balance_sheet
+            self.cashflow = self.__obj.cashflow
+            self.quarterly_cashflow = self.__obj.quarterly_cashflow
+            self.sustainability = self.__obj.sustainability
+            self.recommendations = self.__obj.recommendations
+            self.next_event = self.__obj.calendar
             try:
-                self.option_expirations = self._obj.options
+                self.option_expirations = self.__obj.options
             except IndexError:
                 self.option_expirations = None
 
@@ -62,14 +64,14 @@ class Stock:
         dt = check_convert_date(dt, 'option expiration date')
         dt = dt.strftime('%Y-%m-%d')
         dt = check_list_options(dt, self.option_expirations, 'option expiration date')
-        opt = self._obj.option_chain(dt)
+        opt = self.__obj.option_chain(dt)
         return opt.calls
 
     def get_puts(self, dt):
         dt = check_convert_date(dt, 'option expiration date')
         dt = dt.strftime('%Y-%m-%d')
         dt = check_list_options(dt, self.option_expirations, 'option expiration date')
-        opt = self._obj.option_chain(dt)
+        opt = self.__obj.option_chain(dt)
         return opt.puts
 
     def __set_name_ticker(self):
@@ -111,10 +113,13 @@ class Stock:
 @aliased
 class HistoricalStock(Stock):
 
-    def __init__(self, ticker=None, name=None, start=None, end=None, period=None, interval='1d', verbose=True):
+    def __init__(self, ticker=None, name=None, start=None, end=None, period=None,
+                 interval='1d', adjusted=False, prepost=False, verbose=True):
         super().__init__(ticker, name, verbose)
         self.__dates_bool = False if start is None and end is None else True
         self.__period_bool = False if period is None else True
+        self.adjusted = adjusted
+        self.prepost = prepost
         if self.__dates_bool:
             self.start = check_convert_date(start, 'start')
             self.end = check_convert_date(end, 'end')
@@ -125,9 +130,38 @@ class HistoricalStock(Stock):
                                    '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo']
         self.interval = check_list_options(interval, self.__interval_options, 'interval')
         if self.__period_bool:
-            self.__hist_info = self._obj.history(period=self.period, interval=self.interval)
+            if self.interval == '1m' and self.__period_options.index(self.period) >= 2:
+                end = date.today()
+                start = date.today() - relativedelta(months=1)
+                next_date = date.today() + timedelta(days=7)
+                self.__hist_info = pd.DataFrame()
+                while next_date < end:
+                    print(start, next_date)
+                    holder = yfinance.download(self.ticker, start=start, end=min(end, next_date),
+                                               interval=self.interval, auto_adjust=self.adjusted, prepost=self.prepost,
+                                               threads=True)
+                    start = next_date
+                    next_date = start + timedelta(days=7)
+                    self.__hist_info = self.__hist_info.append(holder)
+            else:
+                self.__hist_info = yfinance.download(self.ticker, period=self.period, interval=self.interval,
+                                                     auto_adjust=self.adjusted, prepost=self.prepost, threads=True)
         elif self.__dates_bool:
-            self.__hist_info = self._obj.history(start=self.start, end=self.end, interval=self.interval)
+            if self.interval == '1m' and (self.end - self.start).days > 7:
+                start = self.start
+                next_date = self.start - timedelta(days=7)
+                self.__hist_info = pd.DataFrame()
+                while next_date > self.end:
+                    holder = yfinance.download(self.ticker, start=start, end=min(end, next_date),
+                                               interval=self.interval, auto_adjust=self.adjusted, prepost=self.prepost,
+                                               threads=True)
+                    start = next_date
+                    next_date = start - timedelta(days=7)
+                    self.__hist_info = self.__hist_info.append(holder)
+            else:
+                self.__hist_info = yfinance.download(self.ticker, start=self.start, end=self.end,
+                                                     interval=self.interval, auto_adjust=self.adjusted,
+                                                     prepost=self.prepost, threads=True)
 
     def __str__(self):
         if self.__dates_bool:
@@ -171,8 +205,16 @@ class HistoricalStock(Stock):
     # TODO: T3
 
     @Alias('macd', 'MACD')
-    def moving_average_convergence_divergence(self):  # TODO: implement
-        pass
+    def moving_average_convergence_divergence(self, long=26, short=12, series_type='Close'):
+        assert short > 0, 'Short period must be greater than 0'
+        assert long > short, 'Long period must be greater than 0'
+        series_options = ['Close', 'Open', 'High', 'Low']
+        series_type = check_list_options(series_type, series_options, 'series type')
+        long_ema = self.exponential_moving_average(long, series_type)
+        short_ema = self.exponential_moving_average(short, series_type)
+        if len(long_ema) == 0 or len(short_ema) == 0:
+            assert NoDataError
+        return short_ema - long_ema
 
     # TODO: MACDEXT
 
@@ -284,6 +326,6 @@ class HistoricalStock(Stock):
 
 
 if __name__ == '__main__':
-    s = HistoricalStock('MSFT', period='1d', interval='1m')
-    # print(type(s.get_hist.loc[:, ['High', 'Low', 'Close']].sum(axis=1).div(3)))
-    print(s.ema())
+    s = HistoricalStock('MSFT', period='1mo', interval='1d')
+    # print(type(s.get_hist))
+    print(s.exponential_moving_average())

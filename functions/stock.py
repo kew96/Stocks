@@ -255,6 +255,8 @@ class HistoricalStock(Stock):
     def relative_strength_index(self, num_periods=5, series_type='Close', avg_func=0):
         type_options = [self.simple_moving_average, self.exponential_moving_average]
         avg_func = type_options[avg_func]
+        series_options = ['Close', 'Open', 'High', 'Low']
+        series_type = check_list_options(series_type, series_options, 'series type')
         price_dif = self.__hist_info.loc[:, series_type].diff()
         days_up, days_down = price_dif.copy(), price_dif.copy()
         days_up[days_up < 0] = 0
@@ -316,8 +318,29 @@ class HistoricalStock(Stock):
     # TODO: ROCR
 
     @Alias('Aroon', 'AROON')
-    def aroon(self):  # TODO: implement
-        pass
+    def aroon(self, num_periods=5):
+        highs = self.__hist_info.loc[:, 'High'].rolling(window=num_periods).max().dropna()
+        lows = self.__hist_info.loc[:, 'Low'].rolling(window=num_periods).min().dropna()
+        high_list = self.__hist_info.loc[:, 'High'].values
+        low_list = self.__hist_info.loc[:, 'Low'].values
+        df = pd.DataFrame({'aroon_up': np.zeros(len(highs)), 'aroon_down': np.zeros(len(lows))},
+                          index=self.__hist_info.index[num_periods - 1:])
+        start = 0
+        aroon_up = []
+        aroon_down = []
+        for h, l in zip(highs, lows):
+            high_subset = high_list[start:start + num_periods]
+            low_subset = low_list[start:start + num_periods]
+            high_len = num_periods - np.where(np.isclose(high_subset, h))[0][0]
+            low_len = num_periods - np.where(np.isclose(low_subset, l))[0][0]
+            up = 100 * (num_periods - high_len) / num_periods
+            down = 100 * (num_periods - low_len) / num_periods
+            aroon_up.append(up)
+            aroon_down.append(down)
+            start += 1
+        df.aroon_up = aroon_up
+        df.aroon_down = aroon_down
+        return df
 
     # TODO: AROONOSC
 
@@ -336,10 +359,6 @@ class HistoricalStock(Stock):
     # TODO: MINUS_DM
 
     # TODO: PLUS_DM
-
-    @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
-    def chaikin_ad_line_values(self):  # TODO: implement
-        pass
 
     @Alias('bbands', 'BBANDS', 'Bollinger_bands')
     def bollinger_bands(self):  # TODO: implement
@@ -387,4 +406,4 @@ class HistoricalStock(Stock):
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
     # print(type(s.get_hist))
-    print(s.commodity_channel_index(5))
+    print(s.aroon())

@@ -27,6 +27,8 @@ class Stock:
         self.summary = self.__gen_info['longBusinessSummary']
         self.sector = self.__gen_info['sector']
         self.industry = self.__gen_info['industry']
+        self.bid = self.__gen_info['bid']
+        self.ask = self.__gen_info['ask']
         if verbose:
             self.dividend_rate = self.__gen_info['dividendRate']
             self.beta = self.__gen_info['beta']
@@ -298,8 +300,14 @@ class HistoricalStock(Stock):
     # TODO: BOP
 
     @Alias('cci', 'CCI', 'commodity_channel')
-    def commodity_channel_index(self):  # TODO: implement
-        pass
+    def commodity_channel_index(self, num_periods=20):  # TODO: implement
+        highs = self.__hist_info.loc[:, 'High'].rolling(window=num_periods).max()
+        lows = self.__hist_info.loc[:, 'Low'].rolling(window=num_periods).min()
+        typical_price = pd.Series(np.sum((highs, lows, self.__hist_info.loc[:, 'Close']), axis=0) / 3,
+                                  index=self.__hist_info.index)
+        avg_typical_price = self.simple_moving_average(other=typical_price, num_periods=num_periods)
+        std_typical_price = typical_price.rolling(window=num_periods).std()
+        return (typical_price - avg_typical_price) / (0.015 * std_typical_price)
 
     # TODO: CMO
 
@@ -379,4 +387,4 @@ class HistoricalStock(Stock):
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
     # print(type(s.get_hist))
-    print(s.adx())
+    print(s.commodity_channel_index(5))

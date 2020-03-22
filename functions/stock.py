@@ -5,6 +5,7 @@ from errors import *
 from alias import *
 from helper_functions.stock_helpers import *
 import pandas as pd
+import numpy as np
 import yfinance
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
@@ -264,9 +265,27 @@ class HistoricalStock(Stock):
 
     # TODO: WILLR
 
+    @Alias('atr', 'ATR')
+    def average_true_range(self, num_periods=14):
+
+        true_range1 = self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Low'])
+        true_range2 = self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Close'].shift(1)).abs()
+        true_range3 = self.__hist_info.loc[:, 'Low'].subtract(self.__hist_info.loc[:, 'Close'].shift(1)).abs()
+        true_range = np.max((true_range1, true_range2, true_range3), axis=0)
+        return self.exponential_moving_average(other=pd.Series(true_range, index=self.__hist_info.index),
+                                               num_periods=num_periods)
+
     @Alias('adx', 'ADX', 'average_directional_movement')
-    def average_directional_movement_index(self):  # TODO: implement
-        pass
+    def average_directional_movement_index(self, num_periods=14):  # TODO: implement
+        up_move = self.__hist_info.loc[:, 'High'].diff()
+        dw_move = self.__hist_info.loc[:, 'Low'].diff()
+        up_move[(up_move < dw_move) | (up_move < 0)] = 0
+        dw_move[(dw_move > up_move) | (dw_move < 0)] = 0
+        pos_di = 100 * self.exponential_moving_average(other=up_move, num_periods=num_periods).div(
+            self.average_true_range(num_periods=num_periods))
+        neg_di = 100 * self.exponential_moving_average(other=dw_move, num_periods=num_periods).div(
+            self.average_true_range(num_periods=num_periods))
+        return 100 * (pos_di.subtract(neg_di).div(pos_di.add(neg_di))).abs()
 
     # TODO: ADXR
 
@@ -360,4 +379,4 @@ class HistoricalStock(Stock):
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
     # print(type(s.get_hist))
-    print(s.relative_strength_index())
+    print(s.adx())

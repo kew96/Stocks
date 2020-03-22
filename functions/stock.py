@@ -226,7 +226,7 @@ class HistoricalStock(Stock):
     # TODO: MACDEXT
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
-    def stochastic_oscillator(self, fast_k_period=5, slow_k_period=3, slow_d_period=3,  # TODO: implement
+    def stochastic_oscillator(self, fast_k_period=5, slow_k_period=3, slow_d_period=3,
                               slow_k_ma_type=0, d_ma_type=0, k_args=(), d_args=()):
         type_options = [self.simple_moving_average, self.exponential_moving_average]
         slow_k_ma_type = type_options[slow_k_ma_type]
@@ -239,7 +239,7 @@ class HistoricalStock(Stock):
             slow_k_lows, axis=0), axis=0)
         print(type(slow_k))
         slow_k = slow_k_ma_type(other=slow_k, *k_args)
-        slow_d = d_ma_type(other=slow_k, *d_args)
+        slow_d = d_ma_type(other=slow_k, num_periods=slow_d_period, *d_args)
         fast_k = self.__hist_info.loc[:, 'Close'].subtract(fast_k_lows, axis=0).div(fast_k_highs.subtract(
             fast_k_lows, axis=0), axis=0)
         fast_d = d_ma_type(other=fast_k, *d_args)
@@ -249,8 +249,16 @@ class HistoricalStock(Stock):
     # TODO: STOCHF
 
     @Alias('rsi', 'RSI', 'relative_strength')
-    def relative_strength_index(self):  # TODO: implement
-        pass
+    def relative_strength_index(self, num_periods=5, series_type='Close', avg_func=0):
+        type_options = [self.simple_moving_average, self.exponential_moving_average]
+        avg_func = type_options[avg_func]
+        price_dif = self.__hist_info.loc[:, series_type].diff()
+        days_up, days_down = price_dif.copy(), price_dif.copy()
+        days_up[days_up < 0] = 0
+        days_down[days_down > 0] = 0
+        up_avg = avg_func(other=days_up, num_periods=num_periods)
+        down_avg = avg_func(other=days_down.abs(), num_periods=num_periods)
+        return (100 * up_avg / (up_avg + down_avg)).dropna()
 
     # TODO: STOCHRSI
 
@@ -352,4 +360,4 @@ class HistoricalStock(Stock):
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
     # print(type(s.get_hist))
-    print(s.stochastic_oscillator())
+    print(s.relative_strength_index())

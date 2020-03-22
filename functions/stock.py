@@ -170,18 +170,25 @@ class HistoricalStock(Stock):
             return self.ticker + f' period: {self.period} ({self.interval})'
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self, num_periods=3, series_type='Close'):
+    def simple_moving_average(self, num_periods=3, series_type='Close', other=None):
         assert num_periods > 0, 'num_periods must be greater than 0'
-        series_options = ['Close', 'Open', 'High', 'Low']
-        series_type = check_list_options(series_type, series_options, 'series type')
-        return self.__hist_info.loc[:, series_type].rolling(window=num_periods).mean().iloc[num_periods - 1:]
+        if other is not None:
+            return other.rolling(window=num_periods).mean()
+        else:
+            series_options = ['Close', 'Open', 'High', 'Low']
+            series_type = check_list_options(series_type, series_options, 'series type')
+            return self.__hist_info.loc[:, series_type].rolling(window=num_periods).mean().iloc[num_periods - 1:]
 
     @Alias('ema', 'EMA')
-    def exponential_moving_average(self, num_periods=3, series_type='Close'):
+    def exponential_moving_average(self, num_periods=3, series_type='Close', other=None):
         assert num_periods > 0, 'num_periods must be greater than 0'
-        series_options = ['Close', 'Open', 'High', 'Low']
-        series_type = check_list_options(series_type, series_options, 'series type')
-        return self.__hist_info.loc[:, series_type].ewm(span=num_periods, adjust=False).mean().iloc[num_periods - 1:]
+        if other is not None:
+            return other.ewm(span=num_periods, adjust=False).mean()
+        else:
+            series_options = ['Close', 'Open', 'High', 'Low']
+            series_type = check_list_options(series_type, series_options, 'series type')
+            return self.__hist_info.loc[:, series_type].ewm(span=num_periods, adjust=False).mean().iloc[
+                   num_periods - 1:]
 
     @Alias('vwap', 'VWAP')
     def volume_weighted_average_price(self):
@@ -219,8 +226,25 @@ class HistoricalStock(Stock):
     # TODO: MACDEXT
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
-    def stochastic_oscillator(self):  # TODO: implement
-        pass
+    def stochastic_oscillator(self, fast_k_period=5, slow_k_period=3, slow_d_period=3,  # TODO: implement
+                              slow_k_ma_type=0, d_ma_type=0, k_args=(), d_args=()):
+        type_options = [self.simple_moving_average, self.exponential_moving_average]
+        slow_k_ma_type = type_options[slow_k_ma_type]
+        d_ma_type = type_options[d_ma_type]
+        slow_k_lows = self.__hist_info.loc[:, 'Low'].rolling(window=slow_k_period).min()
+        slow_k_highs = self.__hist_info.loc[:, 'High'].rolling(window=slow_k_period).max()
+        fast_k_lows = self.__hist_info.loc[:, 'Low'].rolling(window=fast_k_period).min()
+        fast_k_highs = self.__hist_info.loc[:, 'High'].rolling(window=fast_k_period).max()
+        slow_k = self.__hist_info.loc[:, 'Close'].subtract(slow_k_lows, axis=0).div(slow_k_highs.subtract(
+            slow_k_lows, axis=0), axis=0)
+        print(type(slow_k))
+        slow_k = slow_k_ma_type(other=slow_k, *k_args)
+        slow_d = d_ma_type(other=slow_k, *d_args)
+        fast_k = self.__hist_info.loc[:, 'Close'].subtract(fast_k_lows, axis=0).div(fast_k_highs.subtract(
+            fast_k_lows, axis=0), axis=0)
+        fast_d = d_ma_type(other=fast_k, *d_args)
+        total = pd.DataFrame({'fast_d': fast_d, 'slow_d': slow_d, 'fast_k': fast_k, 'slow_k': slow_k})
+        return total.dropna(how='all')
 
     # TODO: STOCHF
 
@@ -328,4 +352,4 @@ class HistoricalStock(Stock):
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
     # print(type(s.get_hist))
-    print(s.exponential_moving_average())
+    print(s.stochastic_oscillator())

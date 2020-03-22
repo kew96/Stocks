@@ -240,7 +240,6 @@ class HistoricalStock(Stock):
         fast_k_highs = self.__hist_info.loc[:, 'High'].rolling(window=fast_k_period).max()
         slow_k = self.__hist_info.loc[:, 'Close'].subtract(slow_k_lows, axis=0).div(slow_k_highs.subtract(
             slow_k_lows, axis=0), axis=0)
-        print(type(slow_k))
         slow_k = slow_k_ma_type(other=slow_k, *k_args)
         slow_d = d_ma_type(other=slow_k, num_periods=slow_d_period, *d_args)
         fast_k = self.__hist_info.loc[:, 'Close'].subtract(fast_k_lows, axis=0).div(fast_k_highs.subtract(
@@ -361,8 +360,21 @@ class HistoricalStock(Stock):
     # TODO: PLUS_DM
 
     @Alias('bbands', 'BBANDS', 'Bollinger_bands')
-    def bollinger_bands(self):  # TODO: implement
-        pass
+    def bollinger_bands(self, num_periods=5, series_type='Close', dev_up=2, dev_dw=2, matype=0, func_args=()):
+        assert dev_up > 0, 'dev_up must be greater than zero'
+        assert dev_dw > 0, 'dev_dw must be greater than zero'
+        dev_up = int(dev_up)
+        dev_dw = int(dev_dw)
+        type_options = [self.simple_moving_average, self.exponential_moving_average]
+        matype = type_options[matype]
+        series_options = ['Close', 'Open', 'High', 'Low']
+        series_type = check_list_options(series_type, series_options, 'series type')
+        cols = ['High', 'Low', 'Close']
+        typical_price = self.__hist_info.loc[:, cols].sum(axis=1).div(3)
+        mid = matype(other=typical_price, num_periods=num_periods, *func_args)
+        upper = mid + dev_up * typical_price.rolling(window=num_periods).std()
+        lower = mid - dev_dw * typical_price.rolling(window=num_periods).std()
+        return pd.DataFrame({'lower_band': lower, 'mid_band': mid, 'upper_band': upper}, index=self.__hist_info.index)
 
     # TODO: MIDPOINT
 
@@ -377,8 +389,16 @@ class HistoricalStock(Stock):
     # TODO: NATR
 
     @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
-    def chaikin_ad_line_values(self):  # TODO: implement
-        pass
+    def chaikin_ad_line_values(self, num_short_periods=3, num_long_periods=10):
+        clv_volume = (self.__hist_info.loc[:, 'Close'].subtract(self.__hist_info.loc[:, 'Low']) -
+                      self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Close'])).div(
+            self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Low'])
+        ).mul(self.__hist_info.loc[:, 'Volume'])
+        ad = [0]
+        for ind, val in enumerate(clv_volume):
+            ad.append(ad[ind] + val)
+        ad[0] = np.nan
+        return pd.Series(ad)
 
     # TODO: ADOSC
 
@@ -406,4 +426,4 @@ class HistoricalStock(Stock):
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
     # print(type(s.get_hist))
-    print(s.aroon())
+    print(s.chaikin_ad_line_values())

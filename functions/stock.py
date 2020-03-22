@@ -279,7 +279,7 @@ class HistoricalStock(Stock):
                                                num_periods=num_periods)
 
     @Alias('adx', 'ADX', 'average_directional_movement')
-    def average_directional_movement_index(self, num_periods=14):  # TODO: implement
+    def average_directional_movement_index(self, num_periods=14):
         up_move = self.__hist_info.loc[:, 'High'].diff()
         dw_move = self.__hist_info.loc[:, 'Low'].diff()
         up_move[(up_move < dw_move) | (up_move < 0)] = 0
@@ -403,8 +403,16 @@ class HistoricalStock(Stock):
     # TODO: ADOSC
 
     @Alias('obv', 'OBV', 'balance_volume')
-    def on_balance_volume(self):  # TODO: implement
-        pass
+    def on_balance_volume(self, num_periods=5):
+        obv = self.__hist_info.loc[:, 'Close'].diff()
+        for i, dif in enumerate(obv):
+            if dif > 0:
+                obv[i] = self.__hist_info.Volume[i]
+            elif dif < 0:
+                obv[i] = -self.__hist_info.Volume[i]
+            else:
+                obv[i] = 0
+        return self.simple_moving_average(other=obv, num_periods=num_periods)
 
     # TODO: HT_TRENDLINE
 
@@ -421,9 +429,3 @@ class HistoricalStock(Stock):
     @property
     def get_hist(self):
         return self.__hist_info
-
-
-if __name__ == '__main__':
-    s = HistoricalStock('MSFT', period='1mo', interval='1d')
-    # print(type(s.get_hist))
-    print(s.chaikin_ad_line_values())

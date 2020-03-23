@@ -19,7 +19,7 @@ class Portfolio(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, default='Test')
     cash = models.DecimalField(decimal_places=2, max_digits=100)
-    inception = models.DateField(default=timezone.now())
+    inception = models.DateField(default=timezone.now)
 
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
@@ -54,7 +54,7 @@ class Trade(PolymorphicModel):
     fee_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     trade_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     total_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
-    initiated = models.DateTimeField(default=timezone.now())
+    initiated = models.DateTimeField(default=timezone.now)
     closed = models.DateTimeField(blank=True, null=True)
     gain_loss = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
     reason = models.TextField(default='NA')
@@ -130,13 +130,13 @@ class ShortCall(Option):
         return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
 
     def current_value(self):
-        stock = Stock(self.stock.ticker)
-        current_price = Decimal(stock.current['05. price'])
+        temp_stock = Stock(self.stock.ticker)
+        current_price = Decimal(temp_stock.current['05. price'])
         option_value = self.strike - current_price + self.option_cost
         return min(option_value, self.option_cost)
 
 
-class Stock(models.Model):  # TODO: finish
+class Stock(models.Model):
     ticker = models.CharField(default='None', max_length=10, unique=True, primary_key=True)
     name = models.CharField(default='None', max_length=200, unique=True)
     summary = models.TextField(default='NA')

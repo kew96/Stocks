@@ -1,12 +1,14 @@
-from alpha_vantage.timeseries import TimeSeries
 from datetime import timedelta
-from dateutil.relativedelta import relativedelta
-from errors import *
-from alias import *
-from helper_functions.stock_helpers import *
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import yfinance
+from alpha_vantage.timeseries import TimeSeries
+from dateutil.relativedelta import relativedelta
+
+from alias import *
+from errors import *
+from stock_helpers import *
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
 av_ts = TimeSeries(alpha_vantage_KEY)
@@ -360,15 +362,13 @@ class HistoricalStock(Stock):
     # TODO: PLUS_DM
 
     @Alias('bbands', 'BBANDS', 'Bollinger_bands')
-    def bollinger_bands(self, num_periods=5, series_type='Close', dev_up=2, dev_dw=2, matype=0, func_args=()):
+    def bollinger_bands(self, num_periods=5, dev_up=2, dev_dw=2, matype=0, func_args=()):
         assert dev_up > 0, 'dev_up must be greater than zero'
         assert dev_dw > 0, 'dev_dw must be greater than zero'
         dev_up = int(dev_up)
         dev_dw = int(dev_dw)
         type_options = [self.simple_moving_average, self.exponential_moving_average]
         matype = type_options[matype]
-        series_options = ['Close', 'Open', 'High', 'Low']
-        series_type = check_list_options(series_type, series_options, 'series type')
         cols = ['High', 'Low', 'Close']
         typical_price = self.__hist_info.loc[:, cols].sum(axis=1).div(3)
         mid = matype(other=typical_price, num_periods=num_periods, *func_args)
@@ -429,3 +429,7 @@ class HistoricalStock(Stock):
     @property
     def get_hist(self):
         return self.__hist_info
+
+
+if __name__ == '__main__':
+    s = HistoricalStock('MSFT', period='1mo', interval='1d')

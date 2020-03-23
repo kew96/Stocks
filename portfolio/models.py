@@ -139,6 +139,7 @@ class ShortCall(Option):
 class Stock(models.Model):  # TODO: finish
     ticker = models.CharField(default='None', max_length=10, unique=True, primary_key=True)
     name = models.CharField(default='None', max_length=200, unique=True)
+    summary = models.TextField(default='NA')
     sector = models.CharField(default='NA', max_length=100)
     industry = models.CharField(default='NA', max_length=300)
     dividend_rate = models.DecimalField(null=True, decimal_places=2, max_digits=100)

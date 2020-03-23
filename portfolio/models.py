@@ -54,7 +54,8 @@ class Trade(PolymorphicModel):
     total_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     initiated = models.DateTimeField(default=timezone.now)
     closed = models.DateTimeField(blank=True, null=True)
-    gain_loss = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
+    gain_loss_value = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
+    gain_loss_percent = models.DecimalField(decimal_places=6, max_digits=100, blank=True, null=True)
     reason = models.TextField(default='NA')
 
 

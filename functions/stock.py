@@ -3,6 +3,8 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 import yfinance
+from talib import MA_Type
+from talib import abstract as ta
 from alpha_vantage.timeseries import TimeSeries
 from dateutil.relativedelta import relativedelta
 
@@ -167,6 +169,7 @@ class HistoricalStock(Stock):
                 self.__hist_info = yfinance.download(self.ticker, start=self.start, end=self.end,
                                                      interval=self.interval, auto_adjust=self.adjusted,
                                                      prepost=self.prepost, threads=True)
+        self.__hist_info.columns = self.__hist_info.columns.str.lower()
 
     def __str__(self):
         if self.__dates_bool:
@@ -175,25 +178,18 @@ class HistoricalStock(Stock):
             return self.ticker + f' period: {self.period} ({self.interval})'
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self, num_periods=3, series_type='Close', other=None):
+    def simple_moving_average(self, num_periods=3, series_type='close'):
         assert num_periods > 0, 'num_periods must be greater than 0'
-        if other is not None:
-            return other.rolling(window=num_periods).mean()
-        else:
-            series_options = ['Close', 'Open', 'High', 'Low']
-            series_type = check_list_options(series_type, series_options, 'series type')
-            return self.__hist_info.loc[:, series_type].rolling(window=num_periods).mean().iloc[num_periods - 1:]
+        series_options = ['close', 'open', 'high', 'low']
+        series_type = check_list_options(series_type, series_options, 'series type')
+        return ta.SMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('ema', 'EMA')
-    def exponential_moving_average(self, num_periods=3, series_type='Close', other=None):
+    def exponential_moving_average(self, num_periods=3, series_type='close'):
         assert num_periods > 0, 'num_periods must be greater than 0'
-        if other is not None:
-            return other.ewm(span=num_periods, adjust=False).mean()
-        else:
-            series_options = ['Close', 'Open', 'High', 'Low']
-            series_type = check_list_options(series_type, series_options, 'series type')
-            return self.__hist_info.loc[:, series_type].ewm(span=num_periods, adjust=False).mean().iloc[
-                   num_periods - 1:]
+        series_options = ['close', 'open', 'high', 'low']
+        series_type = check_list_options(series_type, series_options, 'series type')
+        return ta.EMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('vwap', 'VWAP')
     def volume_weighted_average_price(self):
@@ -217,16 +213,12 @@ class HistoricalStock(Stock):
     # TODO: T3
 
     @Alias('macd', 'MACD')
-    def moving_average_convergence_divergence(self, long=26, short=12, series_type='Close'):
-        assert short > 0, 'Short period must be greater than 0'
-        assert long > short, 'Long period must be greater than 0'
-        series_options = ['Close', 'Open', 'High', 'Low']
+    def moving_average_convergence_divergence(self, slow=26, fast=12, signal=9, series_type='close'):
+        assert fast > 0, 'Short period must be greater than 0'
+        assert slow > fast, 'Long period must be greater than 0'
+        series_options = ['close', 'open', 'high', 'low']
         series_type = check_list_options(series_type, series_options, 'series type')
-        long_ema = self.exponential_moving_average(long, series_type)
-        short_ema = self.exponential_moving_average(short, series_type)
-        if len(long_ema) == 0 or len(short_ema) == 0:
-            assert NoDataError
-        return short_ema - long_ema
+        return ta.MACD(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, signal_period=signal)
 
     # TODO: MACDEXT
 
@@ -308,7 +300,7 @@ class HistoricalStock(Stock):
         lows = self.__hist_info.loc[:, 'Low'].rolling(window=num_periods).min()
         typical_price = pd.Series(np.sum((highs, lows, self.__hist_info.loc[:, 'Close']), axis=0) / 3,
                                   index=self.__hist_info.index)
-        avg_typical_price = self.simple_moving_average(other=typical_price, num_periods=num_periods)
+        avg_typical_price = self.simple_moving_average(data=typical_price, num_periods=num_periods)
         std_typical_price = typical_price.rolling(window=num_periods).std()
         return (typical_price - avg_typical_price) / (0.015 * std_typical_price)
 
@@ -412,7 +404,7 @@ class HistoricalStock(Stock):
                 obv[i] = -self.__hist_info.Volume[i]
             else:
                 obv[i] = 0
-        return self.simple_moving_average(other=obv, num_periods=num_periods)
+        return self.simple_moving_average(data=obv, num_periods=num_periods)
 
     # TODO: HT_TRENDLINE
 
@@ -433,3 +425,4 @@ class HistoricalStock(Stock):
 
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
+    print(s.moving_average_convergence_divergence(fast=6, slow=10, signal=4))

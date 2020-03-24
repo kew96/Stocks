@@ -27,19 +27,38 @@ def check_list_options(var, options, name):
         for i, o in enumerate(options):
             output = output + str(i + 1) + '. ' + o + '\n'
         while True:
-            if var in options:
-                return var
+            if var.lower() in options:
+                return var.lower()
             else:
                 if var is None:
                     pass
                 elif var.lower() != 'help':
                     print('"' + var + '" is not a valid option.\n')
                 try:
-                    var = options[int(input(output)) - 1]
+                    var = options[int(input(output)) - 1].lower()
                 except IndexError:
                     print('Please restart and only enter valid indices for choices.')
     elif callable(var):
         raise NotImplementedError
+
+
+def check_dict_options(var, options, name):
+    if type(var) == str:
+        output = f'Please choose one of the following options by number for {name}: \n'
+        for i, o in enumerate(options):
+            output = output + str(i + 1) + '. ' + o + '\n'
+        while True:
+            if var.lower() in options.values():  # TODO: finish
+                return var.lower()
+            else:
+                if var is None:
+                    pass
+                elif var.lower() != 'help':
+                    print('"' + var + '" is not a valid option.\n')
+                try:
+                    var = options[int(input(output)) - 1].lower()
+                except IndexError:
+                    print('Please restart and only enter valid indices for choices.')
 
 
 if __name__ == '__main__':

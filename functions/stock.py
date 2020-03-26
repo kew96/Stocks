@@ -177,70 +177,185 @@ class HistoricalStock(Stock):
             return self.ticker + f' period: {self.period} ({self.interval})'
 
     @Alias('sma', 'SMA')
-    def simple_moving_average(self, num_periods=3, series_type='close'):
+    def simple_moving_average(self, num_periods: int = 3, series_type: str = 'close') -> pd.Series:
+        """
+        The arithmetic average over the past n time periods.
+
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the simple moving average
+        :rtype: pandas.Series
+        """
         assert num_periods > 0, 'num_periods must be greater than 0'
-        series_options = ['close', 'open', 'high', 'low']
-        series_type = check_list_options(series_type, series_options, 'series type')
+        series_type = check_series_type(series_type)
         return ta.SMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('ema', 'EMA')
-    def exponential_moving_average(self, num_periods=3, series_type='close'):
+    def exponential_moving_average(self, num_periods: int = 3, series_type: str = 'close') -> pd.Series:
+        """
+        The geometric average over the past n time periods
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the exponential moving average
+        :rtype: pandas.Series
+        """
         assert num_periods > 0, 'num_periods must be greater than 0'
-        series_options = ['close', 'open', 'high', 'low']
-        series_type = check_list_options(series_type, series_options, 'series type')
+        series_type = check_series_type(series_type)
         return ta.EMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('vwap', 'VWAP')
-    def volume_weighted_average_price(self):
+    def volume_weighted_average_price(self) -> pd.Series:
+        """
+        The daily price times volume summed divided by the total volume of the period
+
+        :return: volume weighted average price for the entire time period of historical data
+        :rtype: pandas.Series
+        """
         cols = ['High', 'Low', 'Close']
         typical_price = self.__hist_info.loc[:, cols].sum(axis=1).div(3)
         vwap = typical_price * self.__hist_info.loc[:, 'Volume']
         return pd.Series(vwap.values, self.__hist_info.index, name='VWAP')
 
     @Alias('wma', 'WMA')
-    def weighted_moving_average(self, num_periods=10, series_type='close'):
+    def weighted_moving_average(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
+        """
+        Calculates the average of the time frame for the specified series type with greater weights on more recent data
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the weighted moving average
+        :rtype: pandas.Series
+        """
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.WMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('dema', 'DEMA')
-    def double_exponential_moving_average(self, num_periods=10, series_type='close'):
+    def double_exponential_moving_average(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
+        """
+        The double exponential moving average. Similar to exponential moving average but is more smoothed. Think of
+        a moving average of a moving average.
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the double exponential moving average
+        :rtype: pandas.Series
+        """
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.DEMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('tema', 'TEMA', 't3', 'T3')
-    def triple_exponential_moving_average(self, num_periods=5, vfactor=0.7, series_type='close'):
+    def triple_exponential_moving_average(self, num_periods: int = 5, vfactor: float = 0.7,
+                                          series_type: str = 'close') -> pd.Series:
+        """
+        Based on DEMA, this smooths the data with multiple exponential moving averages and scaling factors.
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param vfactor: a value that indicates the smoothing of the function, between 0 and 1. If 1, then TEMA = DEMA
+        while if 0, TEMA = EMA
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the triple exponential moving average
+        :rtype: pandas.Series
+        """
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        assert 0. <= vfactor <= 1., 'vfactor must be between 0 and 1 inclusive'
+        series_type = check_series_type(series_type)
         return ta.TEMA(self.__hist_info, timeperiod=num_periods, vfactor=vfactor, price=series_type)
 
     @Alias('trima', 'TRIMA')
-    def triangular_moving_average(self, num_periods=10, series_type='close'):
+    def triangular_moving_average(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
+        """
+        A form of weighted moving average that puts more weight on the middle of the time frame and less on the ends.
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the triangular moving average
+        :rtype: pandas.Series
+        """
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.TRIMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('kama', 'KAMA')
-    def kaufman_adaptive_moving_average(self, num_periods=10, series_type='close'):
+    def kaufman_adaptive_moving_average(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
+        """
+        A moving average designed to account for market noise/volatility
+
+        :param num_periods: specifies the number of periods for each calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the kaufman adaptive moving average
+        :rtype: pandas.Series
+        """
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.KAMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('mama', 'MAMA', 'mesa', 'MESA')
-    def mesa_adaptive_moving_average(self, fast=0, slow=0, series_type='close'):
+    def mesa_adaptive_moving_average(self, fast: float = 0.01, slow: float = 0.01,
+                                     series_type: str = 'close') -> pd.DataFrame:
+        """
+        Trend following indicator based on the rate change of phase as measured by the Hilbert Transform Discriminator.
+        Uses a fast and slow moving average to quickly respond to price changes.
+
+        :param fast: specifies the number of periods for each fast moving average calculation
+        :param slow: specifies the number of periods for each slow moving average calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas DataFrame with the mesa adaptive moving average: first column is "mama", second column
+        is "fama"
+        :rtype: pandas.DataFrame
+        """
+        assert fast >= 0, 'fast must be greater than or equal to 0'
+        assert slow >= 0, 'slow must be greater than or equal to 0'
+        series_type = check_series_type(series_type)
         return ta.MAMA(self.__hist_info, fastlimit=fast, slowlimit=slow, price=series_type)
 
     @Alias('macd', 'MACD')
-    def moving_average_convergence_divergence(self, slow=26, fast=12, signal=9, series_type='close'):
+    def moving_average_convergence_divergence(self, slow: int = 26, fast: int = 12, signal: int = 9,
+                                              series_type: str = 'close') -> pd.DataFrame:
+        """
+        The MACD is the difference between two exponential moving averages with a signal line being the exponential
+        moving average of the MACD. Signals trend changes and indicates new trends. High values indicate overbought
+        conditions, low values indicate oversold conditions. Divergence with the price indicates an end to the current
+        trend, especially if the MACD is at extreme high or low values. When the MACD line crosses above the signal line
+        a buy signal is generated. When the MACD crosses below the signal line a sell signal is generated. To confirm
+        the signal, the MACD should be above zero for a buy, and below zero for a sell.
+
+        :param slow: specifies the number of periods for each slow exponential moving average calculation
+        :param fast: specifies the number of periods for each fast exponential moving average calculation
+        :param signal: specifies the number of periods for the signal line exponential moving average calculation
+        :param series_type: the price data to calculate over
+        :return: returns a pandas Series with the moving average convergence/divergence: first column is "macd", second
+        column is "macdsignal", third column is "macdhist"
+        :rtype: pandas.Series
+        """
         assert fast > 0, 'Short period must be greater than 0'
         assert slow > fast, 'Long period must be greater than 0'
-        series_options = ['close', 'open', 'high', 'low']
-        series_type = check_list_options(series_type, series_options, 'series type')
+        assert signal > 0, 'signal must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.MACD(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, signal_period=signal)
 
     @Alias('macdext', 'MACDEXT')
     def moving_average_convergence_divergence_matype(self, slow=26, slow_matype=0, fast=12, fast_matype=0, signal=9,
                                                      signal_matype=0, series_type='close'):
+        assert fast > 0, 'fast must be greater than 0'
+        assert slow > fast, 'slow must be greater than fast'
+        assert signal > 0, 'signal must be greater than 0'
         slow_matype = check_matype(slow_matype, 'slow_matype')
         fast_matype = check_matype(fast_matype, 'fast_matype')
         signal_matype = check_matype(signal_matype, 'signal_matype')
+        series_type = check_series_type(series_type)
         return ta.MACDEXT(self.__hist_info, price=series_type, fastperiod=fast, fastmatype=fast_matype, slowperiod=slow,
                           slowmatype=slow_matype, signalperiod=signal, signalmatype=signal_matype)
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
     def stochastic_oscillator(self, fast_k_period=5, slow_k_period=3, slow_d_period=3,
                               slow_k_ma_type=0, slow_d_ma_type=0):
+        assert slow_k_period > 0, 'slow_k_period must be greater than 0'
+        assert fast_k_period > slow_k_period, 'fast_k_period must be greater than slow_k_period'
+        assert slow_d_period > 0, 'slow_d_period must be greater than 0'
         slow_k_ma_type = check_matype(slow_k_ma_type, 'slow_k_ma_type')
         slow_d_ma_type = check_matype(slow_d_ma_type, 'slow_d_ma_type')
         return ta.STOCH(self.__hist_info, fastk_period=fast_k_period, slowk_period=slow_k_period,
@@ -248,6 +363,8 @@ class HistoricalStock(Stock):
 
     @Alias('stochf', 'STOCHF')
     def stochastic_fast(self, fast_k_period=5, fast_d_period=3, matype=0):
+        assert fast_k_period > 0, 'fast_k_period must be greater than 0'
+        assert fast_d_period > 0, 'fast_d_period must be greater than 0'
         matype = check_matype(matype, 'matype')
         return ta.STOCHF(self.__hist_info, fastk_period=fast_k_period, fastd_period=fast_d_period, fastd_matype=matype)
 
@@ -260,35 +377,50 @@ class HistoricalStock(Stock):
 
     @Alias('rsi', 'RSI', 'relative_strength')
     def relative_strength_index(self, num_periods=5, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.RSI(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('willr', 'WILLR')
     def williams_r(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.WILLR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('atr', 'ATR')
     def average_true_range(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.ATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('adx', 'ADX', 'average_directional_movement')
     def average_directional_movement_index(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.ADX(self.__hist_info, timeperiod=num_periods)
 
     @Alias('adxr', 'ADXR')
     def average_directional_movement_index_rating(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.ADXR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('apo', 'APO')
     def absolute_price_oscillator(self, series_type='close', fast=12, slow=26, matype=0):
+        assert fast > 0, 'fast must be greater than 0'
+        assert slow > fast, 'slow must be greater than fast'
+        series_type = check_series_type(series_type)
+        matype = check_matype(matype, 'matype')
         return ta.APO(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, matype=matype)
 
     @Alias('ppo', 'PPO')
     def percentage_price_oscillator(self, series_type='close', fast=12, slow=26, matype=0):
+        assert fast > 0, 'fast must be greater than 0'
+        assert slow > fast, 'slow must be greater than fast'
+        series_type = check_series_type(series_type)
         matype = check_matype(matype, 'matype')
         return ta.PPO(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, matype=matype)
 
     @Alias('mom', 'MOM')
     def momentum(self, num_periods=10, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.MOM(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('bop', 'BOP')
@@ -297,77 +429,103 @@ class HistoricalStock(Stock):
 
     @Alias('cci', 'CCI', 'commodity_channel')
     def commodity_channel_index(self, num_periods=20):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.CCI(self.__hist_info, timeperiod=num_periods)
 
     @Alias('cmo', 'CMO')
     def chande_momentum_oscillator(self, num_periods=14, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.CMO(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('roc', 'ROC')
     def rate_of_change(self, num_periods=10, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.ROC(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('rocr', 'ROCR')
     def rate_of_change_ratio(self, num_periods=10, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.ROCR(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('Aroon', 'AROON')
     def aroon(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.AROON(self.__hist_info, timeperiod=num_periods)
 
     @Alias('Aroonosc', 'AROONOSC', 'AroonOSC', 'AroonOsc')
     def aroon_oscillator(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.AROONOSC(self.__hist_info, timeperiod=num_periods)
 
     @Alias('mfi', 'MFI')
     def money_flow_index(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.MFI(self.__hist_info, timeperiod=num_periods)
 
     @Alias('TRIX', '1ROC_TEMA', '1ROC_T3')
     def trix(self, num_periods=10, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.TRIX(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('ultosc', 'ULTOSC')
     def ultimate_oscillator(self, num_periods1=7, num_periods2=14, num_periods3=28):
+        assert num_periods1 > 0, 'num_periods1 must be greater than 0'
+        assert num_periods2 > num_periods1, 'num_periods2 must be greater than num_periods1'
+        assert num_periods3 > num_periods2, 'num_periods3 must be greater than num_periods2'
         return ta.ULTOSC(self.__hist_info, timeperiod1=num_periods1, timeperiod2=num_periods2, timeperiod3=num_periods3)
 
     @Alias('dx', 'DX')
     def directional_movement_index(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.DX(self.__hist_info, timeperiod=num_periods)
 
     @Alias('minus_di', 'MINUS_DI')
     def minus_directional_indicator(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.MINUS_DI(self.__hist_info, timeperiod=num_periods)
 
     @Alias('plus_di', 'PLUS_DI')
     def plus_directional_indicator(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.PLUS_DI(self.__hist_info, timeperiod=num_periods)
 
     @Alias('minus_dm', 'MINUS_DM')
     def minus_directional_movement(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.MINUS_DM(self.__hist_info, timeperiod=num_periods)
 
     @Alias('plus_dm', 'PLUS_DM')
     def plus_directional_movement(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.PLUS_DM(self.__hist_info, timeperiod=num_periods)
 
     @Alias('bbands', 'BBANDS', 'Bollinger_bands')
     def bollinger_bands(self, num_periods=5, dev_up=2, dev_dw=2, matype=0):
-        assert dev_up > 0, 'dev_up must be greater than zero'
-        assert dev_dw > 0, 'dev_dw must be greater than zero'
+        assert dev_up > 0, 'dev_up must be greater than 0'
+        assert dev_dw > 0, 'dev_dw must be greater than 0'
+        assert num_periods > 0, 'num_periods must be greater than 0'
         matype = check_matype(matype, 'matype')
         return ta.BBANDS(self.__hist_info, timeperiod=num_periods, nbdevup=dev_up, nbdevdn=dev_dw, matype=matype)
 
     @Alias('MIDPOINT')
     def midpoint(self, num_periods=14, series_type='close'):
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        series_type = check_series_type(series_type)
         return ta.MIDPOINT(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('MIDPRICE')
     def midprice(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.MIDPRICE(self.__hist_info, timeperiod=num_periods)
 
     @Alias('sar', 'SAR')
-    def parabolic_sar(self, acceleration=0, maximum=0):
+    def parabolic_sar(self, acceleration=0.01, maximum=0.2):
+        assert acceleration >= 0, 'acceleration must be greater than or equal to 0'
+        assert maximum >= 0, 'maximum must be greater than or equal to 0'
         return ta.SAR(self.__hist_info, acceleration=acceleration, maximum=maximum)
 
     @Alias('trange', 'TRANGE', 'TRange')
@@ -376,10 +534,12 @@ class HistoricalStock(Stock):
 
     @Alias('atr', 'ATR', 'AvgTRANGE', 'AvgTRange')
     def average_true_range(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.ATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('natr', 'NATR')
     def normalized_average_true_range(self, num_periods=14):
+        assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.NATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
@@ -388,23 +548,44 @@ class HistoricalStock(Stock):
 
     @Alias('adosc', 'ADOSC', 'Chaikin_AD_Oscillator')
     def chaikin_ad_oscillator(self, fast=3, slow=10):
+        assert fast > 0, 'fast must be greater than 0'
+        assert slow > fast, 'slow must be greater than fast'
         return ta.ADOSC(self.__hist_info, fastperiod=fast, slowperiod=slow)
 
     @Alias('obv', 'OBV', 'balance_volume')
     def on_balance_volume(self, num_periods=5):
-        return ta.OBV(self.__hist_info)
+        assert num_periods > 0, 'num_periods must be greater than 0'
+        return ta.OBV(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: HT_TRENDLINE
+    @Alias('trendline', 'TRENDLINE', 'instantaneous')
+    def hilbert_transform_instantaneous_trendline(self, series_type='close'):
+        series_type = check_series_type(series_type)
+        return ta.HT_TRENDLINE(self.__hist_info, price=series_type)
 
-    # TODO: HT_SINE
+    @Alias('sine', 'SINE', 'ht_sine', 'HT_SINE', 'sine_wave', 'SINE_WAVE')
+    def hilbert_transform_sine_wave(self, series_type='close'):
+        series_type = check_series_type(series_type)
+        return ta.HT_SINE(self.__hist_info, price=series_type)
 
-    # TODO: HT_TRENDMODE
+    @Alias('trendmode', 'TRENDMODE', 'Trend_vs_Cycle')
+    def hilbert_transform_trend_vs_cycle_mode(self, series_type='close'):
+        series_type = check_series_type(series_type)
+        return ta.HTTRENDMODE(self.__hist_info, price=series_type)
 
-    # TODO: HT_DCPERIOD
+    @Alias('dcperiod', 'DCPERIOD', 'dc_period', 'DC_PERIOD', 'Dominant_Cycle_Period')
+    def hilbert_transform_dominant_cycle_period(self, series_type='close'):
+        series_type = check_series_type(series_type)
+        return ta.HT_DCPERIOD(self.__hist_info, price=series_type)
 
-    # TODO: HT_DCPHASE
+    @Alias('dcphase', 'DCPHASE', 'dc_phase', 'DC_PHASE', 'Dominant_Cycle_Phase')
+    def hilbert_transform_dominant_cycle_phase(self, series_type='close'):
+        series_type = check_series_type(series_type)
+        return ta.HT_DCPHASE(self.__hist_info, price=series_type)
 
-    # TODO: HT_PHASOR
+    @Alias('phasor', 'PHASOR', 'Phasor_Components')
+    def hilbert_transform_phasor_components(self, series_type='close'):
+        series_type = check_series_type(series_type)
+        return ta.HT_PHASOR(self.__hist_info, price=series_type)
 
     @property
     def get_hist(self):
@@ -413,4 +594,4 @@ class HistoricalStock(Stock):
 
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
-    print(s.triple_exponential_moving_average())
+    print(s.moving_average_convergence_divergence())

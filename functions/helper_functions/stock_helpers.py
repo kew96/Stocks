@@ -43,6 +43,10 @@ def check_list_options(var, options, name):
         raise NotImplementedError
 
 
+def check_series_type(series_type):
+    return check_list_options(series_type, ['close', 'open', 'high', 'low'], 'series_type')
+
+
 # noinspection PyProtectedMember
 def check_matype(var, name):
     if type(var) == str:

@@ -14,10 +14,13 @@
       <w>dcperiod</w>
       <w>dcphase</w>
       <w>dema</w>
+      <w>fama</w>
       <w>fastperiod</w>
       <w>intra</w>
       <w>macd</w>
       <w>macdext</w>
+      <w>macdhist</w>
+      <w>macdsignal</w>
       <w>matype</w>
       <w>midprice</w>
       <w>natr</w>

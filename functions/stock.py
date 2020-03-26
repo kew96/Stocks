@@ -1,9 +1,7 @@
 from datetime import timedelta
 
-import numpy as np
 import pandas as pd
 import yfinance
-from talib import MA_Type
 from talib import abstract as ta
 from alpha_vantage.timeseries import TimeSeries
 from dateutil.relativedelta import relativedelta
@@ -170,6 +168,7 @@ class HistoricalStock(Stock):
                                                      interval=self.interval, auto_adjust=self.adjusted,
                                                      prepost=self.prepost, threads=True)
         self.__hist_info.columns = self.__hist_info.columns.str.lower()
+        self.__hist_info.volume = self.__hist_info.volume.astype(float)
 
     def __str__(self):
         if self.__dates_bool:
@@ -198,19 +197,29 @@ class HistoricalStock(Stock):
         vwap = typical_price * self.__hist_info.loc[:, 'Volume']
         return pd.Series(vwap.values, self.__hist_info.index, name='VWAP')
 
-    # TODO: WMA
+    @Alias('wma', 'WMA')
+    def weighted_moving_average(self, num_periods=10, series_type='close'):
+        return ta.WMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: DEMA
+    @Alias('dema', 'DEMA')
+    def double_exponential_moving_average(self, num_periods=10, series_type='close'):
+        return ta.DEMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: TEMA
+    @Alias('tema', 'TEMA', 't3', 'T3')
+    def triple_exponential_moving_average(self, num_periods=5, vfactor=0.7, series_type='close'):
+        return ta.TEMA(self.__hist_info, timeperiod=num_periods, vfactor=vfactor, price=series_type)
 
-    # TODO: TRIMA
+    @Alias('trima', 'TRIMA')
+    def triangular_moving_average(self, num_periods=10, series_type='close'):
+        return ta.TRIMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: KAMA
+    @Alias('kama', 'KAMA')
+    def kaufman_adaptive_moving_average(self, num_periods=10, series_type='close'):
+        return ta.KAMA(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: MAMA
-
-    # TODO: T3
+    @Alias('mama', 'MAMA', 'mesa', 'MESA')
+    def mesa_adaptive_moving_average(self, fast=0, slow=0, series_type='close'):
+        return ta.MAMA(self.__hist_info, fastlimit=fast, slowlimit=slow, price=series_type)
 
     @Alias('macd', 'MACD')
     def moving_average_convergence_divergence(self, slow=26, fast=12, signal=9, series_type='close'):
@@ -220,191 +229,170 @@ class HistoricalStock(Stock):
         series_type = check_list_options(series_type, series_options, 'series type')
         return ta.MACD(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, signal_period=signal)
 
-    # TODO: MACDEXT
+    @Alias('macdext', 'MACDEXT')
+    def moving_average_convergence_divergence_matype(self, slow=26, slow_matype=0, fast=12, fast_matype=0, signal=9,
+                                                     signal_matype=0, series_type='close'):
+        slow_matype = check_matype(slow_matype, 'slow_matype')
+        fast_matype = check_matype(fast_matype, 'fast_matype')
+        signal_matype = check_matype(signal_matype, 'signal_matype')
+        return ta.MACDEXT(self.__hist_info, price=series_type, fastperiod=fast, fastmatype=fast_matype, slowperiod=slow,
+                          slowmatype=slow_matype, signalperiod=signal, signalmatype=signal_matype)
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
     def stochastic_oscillator(self, fast_k_period=5, slow_k_period=3, slow_d_period=3,
-                              slow_k_ma_type=0, d_ma_type=0, k_args=(), d_args=()):
-        type_options = [self.simple_moving_average, self.exponential_moving_average]
-        slow_k_ma_type = type_options[slow_k_ma_type]
-        d_ma_type = type_options[d_ma_type]
-        slow_k_lows = self.__hist_info.loc[:, 'Low'].rolling(window=slow_k_period).min()
-        slow_k_highs = self.__hist_info.loc[:, 'High'].rolling(window=slow_k_period).max()
-        fast_k_lows = self.__hist_info.loc[:, 'Low'].rolling(window=fast_k_period).min()
-        fast_k_highs = self.__hist_info.loc[:, 'High'].rolling(window=fast_k_period).max()
-        slow_k = self.__hist_info.loc[:, 'Close'].subtract(slow_k_lows, axis=0).div(slow_k_highs.subtract(
-            slow_k_lows, axis=0), axis=0)
-        slow_k = slow_k_ma_type(other=slow_k, *k_args)
-        slow_d = d_ma_type(other=slow_k, num_periods=slow_d_period, *d_args)
-        fast_k = self.__hist_info.loc[:, 'Close'].subtract(fast_k_lows, axis=0).div(fast_k_highs.subtract(
-            fast_k_lows, axis=0), axis=0)
-        fast_d = d_ma_type(other=fast_k, *d_args)
-        total = pd.DataFrame({'fast_d': fast_d, 'slow_d': slow_d, 'fast_k': fast_k, 'slow_k': slow_k})
-        return total.dropna(how='all')
+                              slow_k_ma_type=0, slow_d_ma_type=0):
+        slow_k_ma_type = check_matype(slow_k_ma_type, 'slow_k_ma_type')
+        slow_d_ma_type = check_matype(slow_d_ma_type, 'slow_d_ma_type')
+        return ta.STOCH(self.__hist_info, fastk_period=fast_k_period, slowk_period=slow_k_period,
+                        slowk_matype=slow_k_ma_type, slowd_period=slow_d_period, slowd_matype=slow_d_ma_type)
 
-    # TODO: STOCHF
+    @Alias('stochf', 'STOCHF')
+    def stochastic_fast(self, fast_k_period=5, fast_d_period=3, matype=0):
+        matype = check_matype(matype, 'matype')
+        return ta.STOCHF(self.__hist_info, fastk_period=fast_k_period, fastd_period=fast_d_period, fastd_matype=matype)
+
+    @Alias('stochrsi', 'STOCHRSI')
+    def stochastic_relative_strength_index(self, num_periods=14, series_type='close', fast_k_period=5, fast_d_period=3,
+                                           matype=0):
+        matype = check_matype(matype, 'matype')
+        return ta.STOCHRSI(self.__hist_info, timeperiod=num_periods, price=series_type, fastk_period=fast_k_period,
+                           fastd_period=fast_d_period, fastd_matype=matype)
 
     @Alias('rsi', 'RSI', 'relative_strength')
-    def relative_strength_index(self, num_periods=5, series_type='Close', avg_func=0):
-        type_options = [self.simple_moving_average, self.exponential_moving_average]
-        avg_func = type_options[avg_func]
-        series_options = ['Close', 'Open', 'High', 'Low']
-        series_type = check_list_options(series_type, series_options, 'series type')
-        price_dif = self.__hist_info.loc[:, series_type].diff()
-        days_up, days_down = price_dif.copy(), price_dif.copy()
-        days_up[days_up < 0] = 0
-        days_down[days_down > 0] = 0
-        up_avg = avg_func(other=days_up, num_periods=num_periods)
-        down_avg = avg_func(other=days_down.abs(), num_periods=num_periods)
-        return (100 * up_avg / (up_avg + down_avg)).dropna()
+    def relative_strength_index(self, num_periods=5, series_type='close'):
+        return ta.RSI(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: STOCHRSI
-
-    # TODO: WILLR
+    @Alias('willr', 'WILLR')
+    def williams_r(self, num_periods=14):
+        return ta.WILLR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('atr', 'ATR')
     def average_true_range(self, num_periods=14):
-
-        true_range1 = self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Low'])
-        true_range2 = self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Close'].shift(1)).abs()
-        true_range3 = self.__hist_info.loc[:, 'Low'].subtract(self.__hist_info.loc[:, 'Close'].shift(1)).abs()
-        true_range = np.max((true_range1, true_range2, true_range3), axis=0)
-        return self.exponential_moving_average(other=pd.Series(true_range, index=self.__hist_info.index),
-                                               num_periods=num_periods)
+        return ta.ATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('adx', 'ADX', 'average_directional_movement')
     def average_directional_movement_index(self, num_periods=14):
-        up_move = self.__hist_info.loc[:, 'High'].diff()
-        dw_move = self.__hist_info.loc[:, 'Low'].diff()
-        up_move[(up_move < dw_move) | (up_move < 0)] = 0
-        dw_move[(dw_move > up_move) | (dw_move < 0)] = 0
-        pos_di = 100 * self.exponential_moving_average(other=up_move, num_periods=num_periods).div(
-            self.average_true_range(num_periods=num_periods))
-        neg_di = 100 * self.exponential_moving_average(other=dw_move, num_periods=num_periods).div(
-            self.average_true_range(num_periods=num_periods))
-        return 100 * (pos_di.subtract(neg_di).div(pos_di.add(neg_di))).abs()
+        return ta.ADX(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: ADXR
+    @Alias('adxr', 'ADXR')
+    def average_directional_movement_index_rating(self, num_periods=14):
+        return ta.ADXR(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: APO
+    @Alias('apo', 'APO')
+    def absolute_price_oscillator(self, series_type='close', fast=12, slow=26, matype=0):
+        return ta.APO(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, matype=matype)
 
-    # TODO: PPO
+    @Alias('ppo', 'PPO')
+    def percentage_price_oscillator(self, series_type='close', fast=12, slow=26, matype=0):
+        matype = check_matype(matype, 'matype')
+        return ta.PPO(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, matype=matype)
 
-    # TODO: MOM
+    @Alias('mom', 'MOM')
+    def momentum(self, num_periods=10, series_type='close'):
+        return ta.MOM(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: BOP
+    @Alias('bop', 'BOP')
+    def balance_of_power(self):
+        return ta.BOP(self.__hist_info)
 
     @Alias('cci', 'CCI', 'commodity_channel')
-    def commodity_channel_index(self, num_periods=20):  # TODO: implement
-        highs = self.__hist_info.loc[:, 'High'].rolling(window=num_periods).max()
-        lows = self.__hist_info.loc[:, 'Low'].rolling(window=num_periods).min()
-        typical_price = pd.Series(np.sum((highs, lows, self.__hist_info.loc[:, 'Close']), axis=0) / 3,
-                                  index=self.__hist_info.index)
-        avg_typical_price = self.simple_moving_average(data=typical_price, num_periods=num_periods)
-        std_typical_price = typical_price.rolling(window=num_periods).std()
-        return (typical_price - avg_typical_price) / (0.015 * std_typical_price)
+    def commodity_channel_index(self, num_periods=20):
+        return ta.CCI(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: CMO
+    @Alias('cmo', 'CMO')
+    def chande_momentum_oscillator(self, num_periods=14, series_type='close'):
+        return ta.CMO(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: ROC
+    @Alias('roc', 'ROC')
+    def rate_of_change(self, num_periods=10, series_type='close'):
+        return ta.ROC(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: ROCR
+    @Alias('rocr', 'ROCR')
+    def rate_of_change_ratio(self, num_periods=10, series_type='close'):
+        return ta.ROCR(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('Aroon', 'AROON')
-    def aroon(self, num_periods=5):
-        highs = self.__hist_info.loc[:, 'High'].rolling(window=num_periods).max().dropna()
-        lows = self.__hist_info.loc[:, 'Low'].rolling(window=num_periods).min().dropna()
-        high_list = self.__hist_info.loc[:, 'High'].values
-        low_list = self.__hist_info.loc[:, 'Low'].values
-        df = pd.DataFrame({'aroon_up': np.zeros(len(highs)), 'aroon_down': np.zeros(len(lows))},
-                          index=self.__hist_info.index[num_periods - 1:])
-        start = 0
-        aroon_up = []
-        aroon_down = []
-        for h, l in zip(highs, lows):
-            high_subset = high_list[start:start + num_periods]
-            low_subset = low_list[start:start + num_periods]
-            high_len = num_periods - np.where(np.isclose(high_subset, h))[0][0]
-            low_len = num_periods - np.where(np.isclose(low_subset, l))[0][0]
-            up = 100 * (num_periods - high_len) / num_periods
-            down = 100 * (num_periods - low_len) / num_periods
-            aroon_up.append(up)
-            aroon_down.append(down)
-            start += 1
-        df.aroon_up = aroon_up
-        df.aroon_down = aroon_down
-        return df
+    def aroon(self, num_periods=14):
+        return ta.AROON(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: AROONOSC
+    @Alias('Aroonosc', 'AROONOSC', 'AroonOSC', 'AroonOsc')
+    def aroon_oscillator(self, num_periods=14):
+        return ta.AROONOSC(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: MFI
+    @Alias('mfi', 'MFI')
+    def money_flow_index(self, num_periods=14):
+        return ta.MFI(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: TRIX
+    @Alias('TRIX', '1ROC_TEMA', '1ROC_T3')
+    def trix(self, num_periods=10, series_type='close'):
+        return ta.TRIX(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: ULTOSC
+    @Alias('ultosc', 'ULTOSC')
+    def ultimate_oscillator(self, num_periods1=7, num_periods2=14, num_periods3=28):
+        return ta.ULTOSC(self.__hist_info, timeperiod1=num_periods1, timeperiod2=num_periods2, timeperiod3=num_periods3)
 
-    # TODO: DX
+    @Alias('dx', 'DX')
+    def directional_movement_index(self, num_periods=14):
+        return ta.DX(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: MINUS_DI
+    @Alias('minus_di', 'MINUS_DI')
+    def minus_directional_indicator(self, num_periods=14):
+        return ta.MINUS_DI(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: PLUS_DI
+    @Alias('plus_di', 'PLUS_DI')
+    def plus_directional_indicator(self, num_periods=14):
+        return ta.PLUS_DI(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: MINUS_DM
+    @Alias('minus_dm', 'MINUS_DM')
+    def minus_directional_movement(self, num_periods=14):
+        return ta.MINUS_DM(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: PLUS_DM
+    @Alias('plus_dm', 'PLUS_DM')
+    def plus_directional_movement(self, num_periods=14):
+        return ta.PLUS_DM(self.__hist_info, timeperiod=num_periods)
 
     @Alias('bbands', 'BBANDS', 'Bollinger_bands')
-    def bollinger_bands(self, num_periods=5, dev_up=2, dev_dw=2, matype=0, func_args=()):
+    def bollinger_bands(self, num_periods=5, dev_up=2, dev_dw=2, matype=0):
         assert dev_up > 0, 'dev_up must be greater than zero'
         assert dev_dw > 0, 'dev_dw must be greater than zero'
-        dev_up = int(dev_up)
-        dev_dw = int(dev_dw)
-        type_options = [self.simple_moving_average, self.exponential_moving_average]
-        matype = type_options[matype]
-        cols = ['High', 'Low', 'Close']
-        typical_price = self.__hist_info.loc[:, cols].sum(axis=1).div(3)
-        mid = matype(other=typical_price, num_periods=num_periods, *func_args)
-        upper = mid + dev_up * typical_price.rolling(window=num_periods).std()
-        lower = mid - dev_dw * typical_price.rolling(window=num_periods).std()
-        return pd.DataFrame({'lower_band': lower, 'mid_band': mid, 'upper_band': upper}, index=self.__hist_info.index)
+        matype = check_matype(matype, 'matype')
+        return ta.BBANDS(self.__hist_info, timeperiod=num_periods, nbdevup=dev_up, nbdevdn=dev_dw, matype=matype)
 
-    # TODO: MIDPOINT
+    @Alias('MIDPOINT')
+    def midpoint(self, num_periods=14, series_type='close'):
+        return ta.MIDPOINT(self.__hist_info, timeperiod=num_periods, price=series_type)
 
-    # TODO: MIDPRICE
+    @Alias('MIDPRICE')
+    def midprice(self, num_periods=14):
+        return ta.MIDPRICE(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: SAR
+    @Alias('sar', 'SAR')
+    def parabolic_sar(self, acceleration=0, maximum=0):
+        return ta.SAR(self.__hist_info, acceleration=acceleration, maximum=maximum)
 
-    # TODO: TRANGE
+    @Alias('trange', 'TRANGE', 'TRange')
+    def true_range(self):
+        return ta.TRANGE(self.__hist_info)
 
-    # TODO: ATR
+    @Alias('atr', 'ATR', 'AvgTRANGE', 'AvgTRange')
+    def average_true_range(self, num_periods=14):
+        return ta.ATR(self.__hist_info, timeperiod=num_periods)
 
-    # TODO: NATR
+    @Alias('natr', 'NATR')
+    def normalized_average_true_range(self, num_periods=14):
+        return ta.NATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
-    def chaikin_ad_line_values(self, num_short_periods=3, num_long_periods=10):
-        clv_volume = (self.__hist_info.loc[:, 'Close'].subtract(self.__hist_info.loc[:, 'Low']) -
-                      self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Close'])).div(
-            self.__hist_info.loc[:, 'High'].subtract(self.__hist_info.loc[:, 'Low'])
-        ).mul(self.__hist_info.loc[:, 'Volume'])
-        ad = [0]
-        for ind, val in enumerate(clv_volume):
-            ad.append(ad[ind] + val)
-        ad[0] = np.nan
-        return pd.Series(ad)
+    def chaikin_ad_line_values(self):
+        return ta.AD(self.__hist_info)
 
-    # TODO: ADOSC
+    @Alias('adosc', 'ADOSC', 'Chaikin_AD_Oscillator')
+    def chaikin_ad_oscillator(self, fast=3, slow=10):
+        return ta.ADOSC(self.__hist_info, fastperiod=fast, slowperiod=slow)
 
     @Alias('obv', 'OBV', 'balance_volume')
     def on_balance_volume(self, num_periods=5):
-        obv = self.__hist_info.loc[:, 'Close'].diff()
-        for i, dif in enumerate(obv):
-            if dif > 0:
-                obv[i] = self.__hist_info.Volume[i]
-            elif dif < 0:
-                obv[i] = -self.__hist_info.Volume[i]
-            else:
-                obv[i] = 0
-        return self.simple_moving_average(data=obv, num_periods=num_periods)
+        return ta.OBV(self.__hist_info)
 
     # TODO: HT_TRENDLINE
 
@@ -425,4 +413,4 @@ class HistoricalStock(Stock):
 
 if __name__ == '__main__':
     s = HistoricalStock('MSFT', period='1mo', interval='1d')
-    print(s.moving_average_convergence_divergence(fast=6, slow=10, signal=4))
+    print(s.triple_exponential_moving_average())

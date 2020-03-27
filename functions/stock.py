@@ -177,11 +177,20 @@ class HistoricalStock(Stock):
         else:
             return self.ticker + f' period: {self.period} ({self.interval})'
 
+    @property
+    def get_hist(self):
+        return self.__hist_info
+
+    # Basic Averages
+
     @Alias('sma', 'SMA')
     def simple_moving_average(self, num_periods: int = 3, series_type: str = 'close') -> pd.Series:
         """
-        The arithmetic average over the past n time periods.
-
+        Moving Averages are used to smooth the data in an array to help eliminate noise and identify trends. The
+        Simple Moving Average is literally the simplest form of a moving average. Each output value is the average of
+        the previous n values. In a Simple Moving Average, each value in the time period carries equal weight,
+        and values outside of the time period are not included in the average. This makes it less responsive to
+        recent changes in the data, which can be useful for filtering out those changes.
 
         :param num_periods: specifies the number of periods for each calculation
         :param series_type: the price data to calculate over
@@ -195,7 +204,12 @@ class HistoricalStock(Stock):
     @Alias('ema', 'EMA')
     def exponential_moving_average(self, num_periods: int = 3, series_type: str = 'close') -> pd.Series:
         """
-        The geometric average over the past n time periods
+        The Exponential Moving Average is a staple of technical analysis and is used in countless technical
+        indicators. In a Simple Moving Average, each value in the time period carries equal weight, and values
+        outside of the time period are not included in the average. However, the Exponential Moving Average is a
+        cumulative calculation, including all data. Past values have a diminishing contribution to the average,
+        while more recent values have a greater contribution. This method allows the moving average to be more
+        responsive to changes in the data.
 
         :param num_periods: specifies the number of periods for each calculation
         :param series_type: the price data to calculate over
@@ -209,7 +223,8 @@ class HistoricalStock(Stock):
     @Alias('vwap', 'VWAP')
     def volume_weighted_average_price(self) -> pd.Series:
         """
-        The daily price times volume summed divided by the total volume of the period
+        The daily price times volume summed divided by the total volume of the period. Essentially a weighted average
+        of price with the weights being the volume of that time period.
 
         :return: volume weighted average price for the entire time period of historical data
         :rtype: pandas.Series
@@ -222,7 +237,11 @@ class HistoricalStock(Stock):
     @Alias('wma', 'WMA')
     def weighted_moving_average(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
         """
-        Calculates the average of the time frame for the specified series type with greater weights on more recent data
+        The Weighted Moving Average calculates a weight for each value in the series. The more recent values are
+        assigned greater weights. The Weighted Moving Average is similar to a Simple Moving average in that it is not
+        cumulative, that is, it only includes values in the time period (unlike an Exponential Moving Average). The
+        Weighted Moving Average is similar to an Exponential Moving Average in that more recent data has a greater
+        contribution to the average.
 
         :param num_periods: specifies the number of periods for each calculation
         :param series_type: the price data to calculate over
@@ -236,8 +255,9 @@ class HistoricalStock(Stock):
     @Alias('dema', 'DEMA')
     def double_exponential_moving_average(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
         """
-        The double exponential moving average. Similar to exponential moving average but is more smoothed. Think of
-        a moving average of a moving average.
+        The DEMA is a smoothing indicator with less lag than a straight exponential moving average. DEMA is an
+        acronym for Double Exponential Moving Average, but the calculation is more complex than just a moving average
+        of a moving average.
 
         :param num_periods: specifies the number of periods for each calculation
         :param series_type: the price data to calculate over
@@ -252,7 +272,13 @@ class HistoricalStock(Stock):
     def triple_exponential_moving_average(self, num_periods: int = 5, vfactor: float = 0.7,
                                           series_type: str = 'close') -> pd.Series:
         """
-        Based on DEMA, this smooths the data with multiple exponential moving averages and scaling factors.
+        The TEMA is a smoothing indicator with less lag than a straight exponential moving average. TEMA is an
+        acronym for Triple Exponential Moving Average, but the calculation is more complex than that.
+
+        The T3 is a type of moving average, or smoothing function. It is based on the DEMA. The T3 takes the DEMA
+        calculation and adds a vfactor which is between zero and 1. The resultant function is called the GD,
+        or Generalized DEMA. A GD with vfactorof 1 is the same as the DEMA. A GD with a vfactor of zero is the same
+        as an Exponential Moving Average. The T3 typically uses a vfactor of 0.7.
 
         :param num_periods: specifies the number of periods for each calculation
         :param vfactor: a value that indicates the smoothing of the function, between 0 and 1. If 1, then TEMA = DEMA
@@ -374,6 +400,8 @@ class HistoricalStock(Stock):
         return ta.MACDEXT(self.__hist_info, price=series_type, fastperiod=fast, fastmatype=fast_matype,
                           slowperiod=slow,
                           slowmatype=slow_matype, signalperiod=signal, signalmatype=signal_matype)
+
+    # Other Indicators
 
     @Alias('stoch', 'STOCH', 'stoch_oscillator')
     def stochastic_oscillator(self, fast_k_period: int = 5, slow_k_period: int = 3, slow_d_period: int = 3,
@@ -571,9 +599,9 @@ class HistoricalStock(Stock):
     @Alias('mom', 'MOM')
     def momentum(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
         """
-        The Momentum is a measurement of the acceleration and deceleration of prices. It indicates if prices are 
-        increasing at an increasing rate or decreasing at a decreasing rate. The Momentum function can be applied to 
-        the price, or to any other data series. 
+        The Momentum is a measurement of the acceleration and deceleration of prices. It indicates if prices are
+        increasing at an increasing rate or decreasing at a decreasing rate. The Momentum function can be applied to
+        the price, or to any other data series.
 
         :param num_periods: The number of periods for each rolling calculation
         :param series_type: The pricing data to calculate over
@@ -587,9 +615,9 @@ class HistoricalStock(Stock):
     @Alias('bop', 'BOP')
     def balance_of_power(self) -> pd.Series:
         """
-        The Balance of Power indicator measures the market strength of buyers against sellers by assessing the 
+        The Balance of Power indicator measures the market strength of buyers against sellers by assessing the
         ability of each side to drive prices to an extreme level. The calculation is: Balance of Power = (Close price –
-        Open price) / (High price – Low price) The resulting value can be smoothed by a moving average. 
+        Open price) / (High price – Low price) The resulting value can be smoothed by a moving average.
 
         :return: Returns a pandas Series of calculated values
         :rtype: pandas.Series
@@ -651,8 +679,8 @@ class HistoricalStock(Stock):
     @Alias('rocr', 'ROCR')
     def rate_of_change_ratio(self, num_periods: int = 10, series_type: str = 'close') -> pd.Series:
         """
-        The ratio of the Rate of Change function measures rate of change relative to previous periods. The function is 
-        used to determine how rapidly the data is changing. The factor is usually 100, and is used merely to make the 
+        The ratio of the Rate of Change function measures rate of change relative to previous periods. The function is
+        used to determine how rapidly the data is changing. The factor is usually 100, and is used merely to make the
         numbers easier to interpret or graph. The function can be used to measure the Rate of Change of any data series,
         such as price or another indicator. When used with the price, it is referred to as the Price Rate Of Change,
         or PROC.
@@ -680,7 +708,7 @@ class HistoricalStock(Stock):
         crosses above the Aroon Up, it indicates a weakening of the upward trend (and vice versa).
 
         :param num_periods: The number of periods for each rolling calculation
-        :return: Returns a pandas DataFrame of calculated values: first column is "aroondown", second column is 
+        :return: Returns a pandas DataFrame of calculated values: first column is "aroondown", second column is
         "aroonup"
         :rtype: pandas.DataFrame
         """
@@ -692,9 +720,9 @@ class HistoricalStock(Stock):
         """
         The Aroon Oscillator is calculated by subtracting the Aroon Down from the Aroon Up. The resultant number will
         oscillate between 100 and -100. The Aroon Oscillator will be high when the Aroon Up is high and the Aroon Down
-        is low, indicating a strong upward trend. The Aroon Oscillator will be low when the Aroon Down is high and 
-        the Aroon Up is low, indicating a strong downward trend. When the Up and Down are approximately equal, 
-        the Aroon Oscillator will hover around zero, indicating a weak trend or consolidation. See the Aroon 
+        is low, indicating a strong upward trend. The Aroon Oscillator will be low when the Aroon Down is high and
+        the Aroon Up is low, indicating a strong downward trend. When the Up and Down are approximately equal,
+        the Aroon Oscillator will hover around zero, indicating a weak trend or consolidation. See the Aroon
         indicator for more information.
 
         :param num_periods: The number of periods for each rolling calculation
@@ -708,7 +736,7 @@ class HistoricalStock(Stock):
     def money_flow_index(self, num_periods: int = 14) -> pd.Series:
         """
         The Money Flow Index calculates the ratio of money flowing into and out of a security. To interpret the Money
-        Flow Index, look for divergence with price to signal reversals. Money Flow Index values range from 0 to 100. 
+        Flow Index, look for divergence with price to signal reversals. Money Flow Index values range from 0 to 100.
         Values above 80/below 20 indicate market tops/bottoms.
 
         :param num_periods: The number of periods for each rolling calculation
@@ -920,67 +948,132 @@ class HistoricalStock(Stock):
         return ta.SAR(self.__hist_info, acceleration=acceleration, maximum=maximum)
 
     @Alias('trange', 'TRANGE', 'TRange')
-    def true_range(self):  # TODO: complete docstrings
+    def true_range(self) -> pd.Series:
+        """
+        The True Range function is used in the calculation of many indicators, most notably, the Welles Wilder DX. It
+        is a base calculation that is used to determine the normal trading range of a stock or commodity.
+
+        :return: Returns a pandas Series of calculated values
+        :rtype: pandas.Series
+        """
         return ta.TRANGE(self.__hist_info)
 
     @Alias('atr', 'ATR', 'AvgTRANGE', 'AvgTRange')
-    def average_true_range(self, num_periods=14):
+    def average_true_range(self, num_periods: int = 14) -> pd.Series:
+        """
+        The ATR is a Welles Wilder style moving average of the True Range. The ATR is a measure of volatility. High
+        ATR values indicate high volatility, and low values indicate low volatility, often seen when the price is flat.
+
+        The ATR is a component of the Welles Wilder Directional Movement indicators (+/-DI, DX, ADX and ADXR).
+
+        :param num_periods: The number of periods for each rolling calculation
+        :return: Returns a pandas Series of calculated values
+        :rtype: pandas.Series
+        """
         assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.ATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('natr', 'NATR')
-    def normalized_average_true_range(self, num_periods=14):
+    def normalized_average_true_range(self, num_periods: int = 14) -> pd.Series:
+        """
+       The ATR is a Welles Wilder style moving average of the True Range. The ATR is a measure of volatility. High
+       ATR values indicate high volatility, and low values indicate low volatility, often seen when the price is flat.
+
+       The ATR is a component of the Welles Wilder Directional Movement indicators (+/-DI, DX, ADX and ADXR).
+
+       :param num_periods: The number of periods for each rolling calculation
+       :return: Returns a pandas Series of normalized calculated values
+       :rtype: pandas.Series
+       """
         assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.NATR(self.__hist_info, timeperiod=num_periods)
 
     @Alias('ad', 'AD', 'Chaikin_AD_Line', 'Chaikin_AD_line', 'chaikin_ad_line')
-    def chaikin_ad_line_values(self):
+    def chaikin_ad_line_values(self) -> pd.Series:
+        """
+        The Accumulation/Distribution Line is similar to the On Balance Volume (OBV), which sums the volume times
+        +1/-1 based on whether the close is higher than the previous close. The Accumulation/Distribution indicator,
+        however multiplies the volume by the close location value (CLV). The CLV is based on the movement of the
+        issue within a single bar and can be +1, -1 or zero.
+
+        The Accumulation/Distribution Line is interpreted by looking for a divergence in the direction of the
+        indicator relative to price. If the Accumulation/Distribution Line is trending upward it indicates that the
+        price may follow. Also, if the Accumulation/Distribution Line becomes flat while the price is still rising (
+        or falling) then it signals an impending flattening of the price.
+
+        :return: Returns a pandas Series of calculated values
+        :rtype: pandas.Series
+        """
         return ta.AD(self.__hist_info)
 
     @Alias('adosc', 'ADOSC', 'Chaikin_AD_Oscillator')
-    def chaikin_ad_oscillator(self, fast=3, slow=10):
+    def chaikin_ad_oscillator(self, fast: int = 3, slow: int = 10) -> pd.Series:
+        """
+        The Chaikin Oscillator (AKA Chaikin A/D Oscillator) is essentially a momentum of the
+        Accumulation/Distribution Line. It is calculated by subtracting a 10 period exponential moving average of the
+        A/D Line from a 3 period exponential moving average of the A/D Line. When the Chaikin Oscillator crosses
+        above zero, it indicates a buy signal, and when it crosses below zero it indicates a sell signal. Also look
+        for price divergence to indicate bullish or bearish conditions.
+
+
+        :param fast: The time period to use for the fast exponential moving average
+        :param slow: The time period to use for the slow exponential moving average
+        :return: Returns a pandas Series of calculated values
+        :rtype: pandas.Series
+        """
         assert fast > 0, 'fast must be greater than 0'
         assert slow > fast, 'slow must be greater than fast'
         return ta.ADOSC(self.__hist_info, fastperiod=fast, slowperiod=slow)
 
     @Alias('obv', 'OBV', 'balance_volume')
-    def on_balance_volume(self, num_periods=5):
+    def on_balance_volume(self, num_periods: int = 5) -> pd.Series:
+        """
+        The On Balance Volume (OBV) is a cumulative total of the up and down volume. When the close is higher than the
+        previous close, the volume is added to the running total, and when the close is lower than the previous close,
+        the volume is subtracted from the running total.
+
+        To interpret the OBV, look for the OBV to move with the price or precede price moves. If the price moves
+        before the OBV, then it is a non-confirmed move. A series of rising peaks, or falling troughs, in the OBV
+        indicates a strong trend. If the OBV is flat, then the market is not trending.
+
+        :param num_periods: The number of periods for each rolling calculation
+        :return: Returns a pandas Series of calculated values
+        :rtype: pandas.Series
+        """
         assert num_periods > 0, 'num_periods must be greater than 0'
         return ta.OBV(self.__hist_info, timeperiod=num_periods)
 
+    # Cycle Indicators
+
     @Alias('trendline', 'TRENDLINE', 'instantaneous')
-    def hilbert_transform_instantaneous_trendline(self, series_type='close'):
+    def hilbert_transform_instantaneous_trendline(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HT_TRENDLINE(self.__hist_info, price=series_type)
 
     @Alias('sine', 'SINE', 'ht_sine', 'HT_SINE', 'sine_wave', 'SINE_WAVE')
-    def hilbert_transform_sine_wave(self, series_type='close'):
+    def hilbert_transform_sine_wave(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HT_SINE(self.__hist_info, price=series_type)
 
     @Alias('trendmode', 'TRENDMODE', 'Trend_vs_Cycle')
-    def hilbert_transform_trend_vs_cycle_mode(self, series_type='close'):
+    def hilbert_transform_trend_vs_cycle_mode(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HTTRENDMODE(self.__hist_info, price=series_type)
 
     @Alias('dcperiod', 'DCPERIOD', 'dc_period', 'DC_PERIOD', 'Dominant_Cycle_Period')
-    def hilbert_transform_dominant_cycle_period(self, series_type='close'):
+    def hilbert_transform_dominant_cycle_period(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HT_DCPERIOD(self.__hist_info, price=series_type)
 
     @Alias('dcphase', 'DCPHASE', 'dc_phase', 'DC_PHASE', 'Dominant_Cycle_Phase')
-    def hilbert_transform_dominant_cycle_phase(self, series_type='close'):
+    def hilbert_transform_dominant_cycle_phase(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HT_DCPHASE(self.__hist_info, price=series_type)
 
     @Alias('phasor', 'PHASOR', 'Phasor_Components')
-    def hilbert_transform_phasor_components(self, series_type='close'):
+    def hilbert_transform_phasor_components(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HT_PHASOR(self.__hist_info, price=series_type)
-
-    @property
-    def get_hist(self):
-        return self.__hist_info
 
 
 if __name__ == '__main__':

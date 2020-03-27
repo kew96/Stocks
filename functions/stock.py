@@ -119,8 +119,8 @@ class Stock:
 @aliased
 class HistoricalStock(Stock):
 
-    def __init__(self, ticker=None, name=None, start=None, end=None, period=None,
-                 interval='1d', adjusted=False, prepost=False, verbose=True):
+    def __init__(self, ticker: str = None, name: str = None, start: str = None, end: str = None, period: str = None,
+                 interval: str = '1d', adjusted: bool = False, prepost: bool = False, verbose: bool = True):
         super().__init__(ticker, name, verbose)
         self.__dates_bool = False if start is None and end is None else True
         self.__period_bool = False if period is None else True

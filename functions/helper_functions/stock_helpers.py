@@ -67,7 +67,3 @@ def check_matype(var, name):
                     var = int(input(output)) - 1
                 except IndexError:
                     print('Please restart and only enter valid indices for choices.')
-
-
-if __name__ == '__main__':
-    print(check_convert_date('2020-01-01', 'test'))

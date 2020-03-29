@@ -350,13 +350,14 @@ class HistoricalStock(Stock):
         line a buy signal is generated. When the MACD crosses below the signal line a sell signal is generated. To
         confirm the signal, the MACD should be above zero for a buy, and below zero for a sell.
 
+        *Typically buy when MACD is above the signal line and short when MACD is below the signal line
+
         :param slow: specifies the number of periods for each slow exponential moving average calculation
         :param fast: specifies the number of periods for each fast exponential moving average calculation
         :param signal: specifies the number of periods for the signal line exponential moving average calculation
         :param series_type: the price data to calculate over
         :return: returns a pandas DataFrame with the moving average convergence/divergence: first column is "macd",
-        second
-        column is "macdsignal", third column is "macdhist"
+        second column is "macdsignal", third column is "macdhist"
         :rtype: pandas.DataFrame
         """
         assert fast > 0, 'Short period must be greater than 0'
@@ -366,17 +367,18 @@ class HistoricalStock(Stock):
         return ta.MACD(self.__hist_info, price=series_type, fastperiod=fast, slowperiod=slow, signal_period=signal)
 
     @Alias('macdext', 'MACDEXT')
-    def moving_average_convergence_divergence_matype(self, slow: int = 26, slow_matype: int = 0, fast: int = 12,
-                                                     fast_matype: int = 0, signal: int = 9, signal_matype: int = 0,
+    def moving_average_convergence_divergence_matype(self, slow: int = 26, slow_matype: int = 1, fast: int = 12,
+                                                     fast_matype: int = 1, signal: int = 9, signal_matype: int = 1,
                                                      series_type: str = 'close') -> pd.DataFrame:
         """
         The MACDEXT is the difference between two arbitrary moving averages with a signal line being the arbitrary
         moving average of the MACDEXT. Signals trend changes and indicates new trends. High values indicate overbought
         conditions, low values indicate oversold conditions. Divergence with the price indicates an end to the current
         trend, especially if the MACD is at extreme high or low values. When the MACD line crosses above the signal
-        line
-        a buy signal is generated. When the MACD crosses below the signal line a sell signal is generated. To confirm
-        the signal, the MACDEXT should be above zero for a buy, and below zero for a sell.
+        line a buy signal is generated. When the MACD crosses below the signal line a sell signal is generated. To
+        confirm the signal, the MACDEXT should be above zero for a buy, and below zero for a sell.
+
+        *Typically buy when MACD is above the signal line and short when MACD is below the signal line
 
         :param slow: specifies the number of periods for each slow arbitrary moving average calculation
         :param slow_matype: matype to use for the slow arbitrary moving average
@@ -413,6 +415,17 @@ class HistoricalStock(Stock):
         signal. The Raw %K is generally considered too erratic to use for crossover signals. %K is the original
         calculation and %D takes the moving average of %K, both values are slow which refers to them being smoothed.
 
+        *Bound between 0 and 100, used to dictate over bought/sold positions. 80+ indicates over bought, 20- indicates
+        over sold. Should look for changes in this to help with future changes, not helping with long term trends.
+        Stochastic oscillator charting generally consists of two lines: one reflecting the actual value of the
+        oscillator for each session, and one reflecting its three-day simple moving average. Because price is thought
+        to follow momentum, intersection of these two lines is considered to be a signal that a reversal may be in
+        the works, as it indicates a large shift in momentum from day to day. Divergence between the stochastic
+        oscillator and trending price action is also seen as an important reversal signal. For example,
+        when a bearish trend reaches a new lower low, but the oscillator prints a higher low, it may be an indicator
+        that bears are exhausting their momentum and a bullish reversal is brewing. Transaction signals are usually
+        made when the %K crosses through the %D.
+
         :param fast_k_period: specifies the number of periods for each fast k arbitrary moving average calculation
         :param slow_k_period: specifies the number of periods for each slow k arbitrary moving average calculation
         :param slow_d_period: specifies the number of periods for each slow d arbitrary moving average calculation
@@ -440,6 +453,17 @@ class HistoricalStock(Stock):
         signal. The Raw %K is generally considered too erratic to use for crossover signals. %K is the original
         calculation and %D takes the moving average of %K, both values are fast which refers to them being un-smoothed.
 
+        *Bound between 0 and 100, used to dictate over bought/sold positions. 80+ indicates over bought, 20- indicates
+        over sold. Should look for changes in this to help with future changes, not helping with long term trends.
+        Stochastic oscillator charting generally consists of two lines: one reflecting the actual value of the
+        oscillator for each session, and one reflecting its three-day simple moving average. Because price is thought
+        to follow momentum, intersection of these two lines is considered to be a signal that a reversal may be in
+        the works, as it indicates a large shift in momentum from day to day. Divergence between the stochastic
+        oscillator and trending price action is also seen as an important reversal signal. For example,
+        when a bearish trend reaches a new lower low, but the oscillator prints a higher low, it may be an indicator
+        that bears are exhausting their momentum and a bullish reversal is brewing. Transaction signals are usually
+        made when the %K crosses through the %D.
+
         :param fast_k_period: specifies the number of periods for each slow k arbitrary moving average calculation
         :param fast_d_period: specifies the number of periods for each fast k arbitrary moving average calculation
         :param matype: specifies the arbitrary moving average function for each fast d calculation
@@ -462,9 +486,10 @@ class HistoricalStock(Stock):
 
         The Stochastic RSI can be interpreted several ways. Overbought/oversold conditions are indicated when the
         StochRSI crosses above .20 / below .80. A buy signal is generated when the StochRSI moves from oversold to
-        above
-        the midpoint (.50). A sell signal is generated when the StochRSI moves from overbought to below the midpoint.
-        Also look for divergence with the price to indicate the end of a trend.
+        above the midpoint (.50). A sell signal is generated when the StochRSI moves from overbought to below the
+        midpoint. Also look for divergence with the price to indicate the end of a trend.
+
+        *Over 0.8 is over bought, under 0.2 is over sold
 
         :param num_periods: The number of periods to calculate over
         :param series_type: The pricing data to use for the calculation
@@ -487,6 +512,10 @@ class HistoricalStock(Stock):
         value is over 70/below 30. You can also look for divergence with price. If the price is making new highs/lows,
         and the RSI is not, it indicates a reversal.
 
+        *Traditional interpretation and usage of the RSI are that values of 70 or above indicate that a security is
+        becoming overbought or overvalued and may be primed for a trend reversal or corrective pullback in price. An
+        RSI reading of 30 or below indicates an oversold or undervalued condition.
+
         :param num_periods: The number of periods for each rolling calculation
         :param series_type: The pricing data to calculate over
         :return: Returns a pandas Series of calculated values
@@ -503,6 +532,18 @@ class HistoricalStock(Stock):
         on an inverted scale, that is, with zero at the top and 100 at the bottom. Values below 20 indicate an
         overbought condition and a sell signal is generated when it crosses the 20 line. Values over 80 indicate an
         oversold condition and a buy signal is generated when it crosses the 80 line.
+
+        *When the indicator is between 0 and 20 the price is overbought, or near the high of its recent price
+        range. When the indicator is between 80 and 100 the price is oversold, or far from the high of its recent
+        range. During an uptrend, traders can watch for the indicator to move above 80. When the price starts moving
+        up, and the indicator moves back below 80, it could signal that the uptrend in price is starting again.The
+        same concept could be used to find short trades in a downtrend. When the indicator is below 20, watch for the
+        price to start falling along with the Williams %R moving back above 20 to signal a potential continuation of
+        the downtrend. Traders can also watch for momentum failures. During a strong uptrend, the price will often
+        reach 20 or below. If the indicator falls, and then can't get back below 20 before falling again,
+        that signals that the upward price momentum is in trouble and a bigger price decline could follow. The same
+        concept applies to a downtrend. Readings of 80 or above are often reached. When the indicator can no longer
+        reach those low levels before moving higher it could indicate the price is going to head higher.
 
         :param num_periods: The number of periods to perform the rolling calculation over
         :return: Returns a pandas Series of calculated values

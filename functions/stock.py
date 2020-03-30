@@ -560,6 +560,8 @@ class HistoricalStock(Stock):
 
         The ATR is a component of the Welles Wilder Directional Movement indicators (+/-DI, DX, ADX and ADXR).
 
+        *Measures volatility (place a sell order at n times the ATR below the highest high since you entered a position.
+
         :param num_periods: The number of periods to use for the rolling calculation
         :return: Returns a pandas Series of calculated values
         :rtype: pandas.Series
@@ -574,6 +576,8 @@ class HistoricalStock(Stock):
         to 100, but rarely get above 60. To interpret the ADX, consider a high number to be a strong trend, and a low
         number, a weak trend.
 
+        *Quantifies trend strength, over 25 is considered trending
+
         :param num_periods: The number of periods to perform the rolling calculation over
         :return: Returns a pandas Series of calculated values
         :rtype: pandas.Series
@@ -582,12 +586,15 @@ class HistoricalStock(Stock):
         return ta.ADX(self.__hist_info, timeperiod=num_periods)
 
     @Alias('adxr', 'ADXR')
-    def average_directional_movement_index_rating(self, num_periods: int = 14) -> pd.Series:
+    def average_directional_movement_index_rating(self, num_periods: int = 10) -> pd.Series:
         """
         The ADXR is equal to the current ADX plus the ADX from n bars ago divided by 2. In effect, it is the average of
         the two ADX values. The ADXR smooths the ADX, and is therefore less responsive, however, the ADXR filters out
         excessive tops and bottoms. To interpret the ADXR, consider a high number to be a strong trend, and a low
         number, a weak trend.
+
+        *Essentially the ADX but can be used as a more conservative estimate. Can be used by buying when ADX > ADXR
+        and selling when ADX < ADXR when at least the ADX < 25.
 
         :param num_periods: The number of periods to perform the rolling calculation over
         :return: Returns a pandas Series of calculated values
@@ -603,6 +610,8 @@ class HistoricalStock(Stock):
         The Price Oscillator shows the difference between two moving averages. It is basically a MACD, but the Price
         Oscillator can use any time periods. A buy signal is generate when the Price Oscillator rises above zero,
         and a sell signal when the it falls below zero.
+
+        *Returned numbers indicate the amount the short average is above/below the long average
 
         :param series_type: The pricing data to perform the rolling calculation over
         :param fast: The period to perform the fast arbitrary moving average over
@@ -624,6 +633,8 @@ class HistoricalStock(Stock):
         The Price Oscillator Percent shows the percentage difference between two moving averages. A buy signal is
         generate when the Price Oscillator Percent rises above zero, and a sell signal when the it falls below zero.
 
+        *Returned numbers indicate the percent that the short term average is greater/less than the long term average.
+
         :param series_type: The pricing data to perform the rolling calculation over
         :param fast: The period to perform the fast arbitrary moving average over
         :param slow: The period to perform the slow arbitrary moving average over
@@ -644,6 +655,13 @@ class HistoricalStock(Stock):
         increasing at an increasing rate or decreasing at a decreasing rate. The Momentum function can be applied to
         the price, or to any other data series.
 
+        *When applied, an investor can buy or sell based on the strength of the trends in an asset's price. If a
+        trader wants to use a momentum-based strategy, he takes a long position in a stock or asset that has been
+        trending up. If the stock is trending down, he takes a short position. Instead of the traditional philosophy
+        of trading—buy low, sell high—momentum investing seeks to sell low and buy lower, or buy high and sell
+        higher. Instead of identifying the continuation or reversal pattern, momentum investors focus on the trend
+        created by the most recent price break.
+
         :param num_periods: The number of periods for each rolling calculation
         :param series_type: The pricing data to calculate over
         :return: Returns a pandas Series of calculated values
@@ -660,6 +678,10 @@ class HistoricalStock(Stock):
         ability of each side to drive prices to an extreme level. The calculation is: Balance of Power = (Close price –
         Open price) / (High price – Low price) The resulting value can be smoothed by a moving average.
 
+        *The BOP oscillates around zero center line in the range from -1 to +1. Positive BOP reading is an indication
+        of buyers' dominance and negative BOP reading is a sign of the stronger selling pressure. When BOP is equal
+        zero it indicates that buyers and sellers are equally strong.
+
         :return: Returns a pandas Series of calculated values
         :rtype: pandas.Series
         """
@@ -672,6 +694,12 @@ class HistoricalStock(Stock):
         trading range. CCI values outside of this range indicate overbought or oversold conditions. You can also look
         for price divergence in the CCI. If the price is making new highs, and the CCI is not, then a price
         correction is likely.
+
+        *The CCI compares the current price to an average price over a period of time. The indicator fluctuates above
+        or below zero, moving into positive or negative territory. While most values, approximately 75%, fall between
+        -100 and +100, about 25% of the values fall outside this range, indicating a lot of weakness or strength in
+        the price movement. When the CCI is above +100, this means the price is well above the average price as
+        measured by the indicator. When the indicator is below -100, the price is well below the average price.
 
         :param num_periods: The number of periods to perform the rolling calculation over
         :return: Returns a pandas Series of calculated values
@@ -686,7 +714,7 @@ class HistoricalStock(Stock):
         The Chande Momentum Oscillator is a modified RSI. Where the RSI divides the upward movement by the net
         movement (up / (up + down)), the CMO divides the total movement by the net movement ((up - down) / (up + down)).
 
-        There are several ways to interpret the CMO. Values over 50 indicate overbought conditions, while values
+        *There are several ways to interpret the CMO. Values over 50 indicate overbought conditions, while values
         under -50 indicate oversold conditions. High CMO values indicate strong trends. When the CMO crosses above a
         moving average of the CMO, it is a buy signal, crossing down is a sell signal.
 
@@ -736,13 +764,13 @@ class HistoricalStock(Stock):
         return ta.ROCR(self.__hist_info, timeperiod=num_periods, price=series_type)
 
     @Alias('Aroon', 'AROON')
-    def aroon(self, num_periods: int = 14) -> pd.DataFrame:
+    def aroon(self, num_periods: int = 25) -> pd.DataFrame:
         """
         The word aroon is Sanskrit for "dawn's early light." The Aroon indicator attempts to show when a new trend is
         dawning. The indicator consists of two lines (Up and Down) that measure how long it has been since the
         highest high/lowest low has occurred within an n period range.
 
-        When the Aroon Up is staying between 70 and 100 then it indicates an upward trend. When the Aroon Down is
+        *When the Aroon Up is staying between 70 and 100 then it indicates an upward trend. When the Aroon Down is
         staying between 70 and 100 then it indicates an downward trend. A strong upward trend is indicated when the
         Aroon Up is above 70 while the Aroon Down is below 30. Likewise, a strong downward trend is indicated when
         the Aroon Down is above 70 while the Aroon Up is below 30. Also look for crossovers. When the Aroon Down
@@ -766,6 +794,12 @@ class HistoricalStock(Stock):
         the Aroon Oscillator will hover around zero, indicating a weak trend or consolidation. See the Aroon
         indicator for more information.
 
+        *The Aroon Oscillator moves between -100 and 100. A high oscillator value is an indication of an uptrend
+        while a low oscillator value is an indication of a downtrend. When Aroon Up remains high from consecutive new
+        highs, the oscillator value will be high, following the uptrend. When  The Aroon Oscillator line can be included
+        with or without the Aroon Up and Aroon Down when viewing a chart. Significant changes in the direction of the
+        Aroon Oscillator can help to identify a new trend.
+
         :param num_periods: The number of periods for each rolling calculation
         :return: Returns a pandas Series of calculated values
         :rtype: pandas.Series
@@ -779,6 +813,18 @@ class HistoricalStock(Stock):
         The Money Flow Index calculates the ratio of money flowing into and out of a security. To interpret the Money
         Flow Index, look for divergence with price to signal reversals. Money Flow Index values range from 0 to 100.
         Values above 80/below 20 indicate market tops/bottoms.
+
+        *One of the primary ways to use the Money Flow Index is when there is a divergence. A divergence is when the
+        oscillator is moving in the opposite direction of price. This is a signal of a potential reversal in the
+        prevailing price trend. For example, a very high Money Flow Index that begins to fall below a reading of 80
+        while the underlying security continues to climb is a price reversal signal to the downside. Conversely,
+        a very low MFI reading that climbs above a reading of 20 while the underlying security continues to sell off
+        is a price reversal signal to the upside. Other moves out of overbought or oversold territory can also be
+        useful. For example, when an asset is in an uptrend, a drop below 20 (or even 30) and then a rally back above
+        it could indicate a pullback is over and the price uptrend is resuming. The same goes for a downtrend. A
+        short-term rally could push the MFI up to 70 or 80, but when it drops back below that could be the time to
+        enter a short trade in preparation for another drop.
+
 
         :param num_periods: The number of periods for each rolling calculation
         :return: Returns a pandas Series of calculated values
@@ -795,6 +841,13 @@ class HistoricalStock(Stock):
         exponential moving average of the TRIX can be used as a signal line. A buy/sell signals are generated when
         the TRIX crosses above/below the signal line and is also above/below zero.
 
+        *As a powerful oscillator indicator, TRIX can be used to identify oversold and overbought markets, and it can
+        also be used as a momentum indicator. Like many oscillators, TRIX oscillates around a zero line. When it is
+        used as an oscillator, a positive value indicates an overbought market while a negative value indicates an
+        oversold market. When TRIX is used as a momentum indicator, a positive value suggests momentum is increasing
+        while a negative value suggests momentum is decreasing. Many analysts believe that when the TRIX crosses
+        above the zero line, it gives a buy signal, and when it closes below the zero line, it gives a sell signal.
+        Also, any divergence between price and TRIX can indicate significant turning points in the market.
 
         :param num_periods: The number of periods for each rolling calculation
         :param series_type: The pricing data to calculate over
@@ -813,6 +866,20 @@ class HistoricalStock(Stock):
         indicate overbought conditions, and values under 30 indicate oversold conditions. Also look for
         agreement/divergence with the price to confirm a trend or signal the end of a trend.
 
+        *False divergences are common in oscillators that only use one time frame, because when the price surges the
+        oscillator surges. Even if the price continues to rise the oscillator tends to fall forming a divergence even
+        though the price may still be trending strongly. In order for the indicator to generate a buy signal,
+        Williams recommended a three-step approach. 1, a bullish divergence must form. This is when the price makes a
+        lower low but the indicator is at a higher low. 2, the first low in the divergence (the lower one) must have
+        been below 30. This means the divergence started from oversold territory and is more likely to result in an
+        upside price reversal. 3, the Ultimate oscillator must rise above the divergence high. The divergence high is
+        the high point between the two lows of the divergence. Williams created the same three-step method for sell
+        signals. 1, a bearish divergence must form. This is when the price makes a higher high but the indicator is
+        at a lower high. 2, the first high in the divergence (the higher one) must be above 70. This means the
+        divergence started from overbought territory and is more likely to result in a downside price reversal. 3,
+        the Ultimate oscillator must drop below the divergence low. The divergence low is the low point between
+        the two highs of the divergence.
+
         :param num_periods1: The number of periods for each of the first rolling calculations
         :param num_periods2: The number of periods for each of the second rolling calculations
         :param num_periods3: The number of periods for each of the third rolling calculations
@@ -830,6 +897,14 @@ class HistoricalStock(Stock):
         """
         The DX is usually smoothed with a moving average (i.e. the ADX). The values range from 0 to 100, but rarely
         get above 60. To interpret the DX, consider a high number to be a strong trend, and a low number, a weak trend.
+
+        *Crossovers are the main trade signals. A long trade is taken when the +DI crosses above -DI and uptrend
+        could be underway. A sell signal occurs when the -DI drops below -DI. A short trade is initiated when -DI
+        drops below +DI because a downtrend could be underway. While this method may produce some good signals,
+        it will also produce some bad ones since a trend may not necessarily develop after entry. The indicator can
+        also be used as a trend or trade confirmation tool. If the +DI is well above -DI, the trend has strength to
+        the upside and this would help confirm current long trades or new long trade signals based on other entry
+        methods. If -DI is well above +DI this confirms the strong downtrend or short positions.
 
         :param num_periods: The number of periods for each rolling calculation
         :return: Returns a pandas Series of calculated values
@@ -880,14 +955,10 @@ class HistoricalStock(Stock):
     def minus_directional_movement(self, num_periods: int = 14) -> pd.Series:
         """
         The +DI is the percentage of the true range that is up. The -DI is the percentage of the true range
-        that is
-        down. A buy signal is generated when the +DI crosses up over the -DI. A sell signal is generated when
-        the -DI
-        crosses up over the +DI. You should wait to enter a trade until the extreme point is reached. That is,
-        you should wait to enter a long trade until the price reaches the high of the bar on which the +DI
-        crossed
-        over the -DI, and wait to enter a short trade until the price reaches the low of the bar on which the
-        -DI
+        that is down. A buy signal is generated when the +DI crosses up over the -DI. A sell signal is generated when
+        the -DI crosses up over the +DI. You should wait to enter a trade until the extreme point is reached. That
+        is, you should wait to enter a long trade until the price reaches the high of the bar on which the +DI crossed
+        over the -DI, and wait to enter a short trade until the price reaches the low of the bar on which the -DI
         crossed over the +DI.
 
         :param num_periods: The number of periods for each rolling calculation
@@ -901,14 +972,10 @@ class HistoricalStock(Stock):
     def plus_directional_movement(self, num_periods: int = 14) -> pd.Series:
         """
         The +DI is the percentage of the true range that is up. The -DI is the percentage of the true range
-        that is
-        down. A buy signal is generated when the +DI crosses up over the -DI. A sell signal is generated when
-        the -DI
-        crosses up over the +DI. You should wait to enter a trade until the extreme point is reached. That is,
-        you should wait to enter a long trade until the price reaches the high of the bar on which the +DI
-        crossed
-        over the -DI, and wait to enter a short trade until the price reaches the low of the bar on which the
-        -DI
+        that is down. A buy signal is generated when the +DI crosses up over the -DI. A sell signal is generated when
+        the -DI crosses up over the +DI. You should wait to enter a trade until the extreme point is reached. That
+        is, you should wait to enter a long trade until the price reaches the high of the bar on which the +DI crossed
+        over the -DI, and wait to enter a short trade until the price reaches the low of the bar on which the -DI
         crossed over the +DI.
 
         :param num_periods: The number of periods for each rolling calculation
@@ -930,6 +997,17 @@ class HistoricalStock(Stock):
         imminent. The middle band becomes a support or resistance level. The upper and lower bands can also be
         interpreted as price targets. When the price bounces off of the lower band and crosses the middle band,
         then the upper band becomes the price target.
+
+        *The squeeze is the central concept of Bollinger Bands®. When the bands come close together, constricting the
+        moving average, it is called a squeeze. A squeeze signals a period of low volatility and is considered by
+        traders to be a potential sign of future increased volatility and possible trading opportunities. Conversely,
+        the wider apart the bands move, the more likely the chance of a decrease in volatility and the greater the
+        possibility of exiting a trade. However, these conditions are not trading signals. The bands give no
+        indication when the change may take place or which direction price could move. Approximately 90% of price
+        action occurs between the two bands. Any breakout above or below the bands is a major event. The breakout is
+        not a trading signal. The mistake most people make is believing that that price hitting or exceeding one of
+        the bands is a signal to buy or sell. Breakouts provide no clue as to the direction and extent of future
+        price movement.
 
         :param num_periods: he number of periods for each rolling calculation
         :param dev_up: The standard deviation multiplier for the upper band
@@ -979,6 +1057,8 @@ class HistoricalStock(Stock):
         that you are always in the market, and calculates the Stop And Reverse point when you would close a long
         position and open a short position or vice versa.
 
+        *Typically place stop loss orders at the Parabolic SAR values
+
         :param acceleration: A scaling factor to capture momentum
         :param maximum: The lowest or highest point depending on the trend
         :return: Returns a pandas Series of calculated values
@@ -1006,6 +1086,8 @@ class HistoricalStock(Stock):
         ATR values indicate high volatility, and low values indicate low volatility, often seen when the price is flat.
 
         The ATR is a component of the Welles Wilder Directional Movement indicators (+/-DI, DX, ADX and ADXR).
+
+        *Measures the volatility of an asset, used with the Chandelier Exit strategy
 
         :param num_periods: The number of periods for each rolling calculation
         :return: Returns a pandas Series of calculated values
@@ -1037,7 +1119,7 @@ class HistoricalStock(Stock):
         however multiplies the volume by the close location value (CLV). The CLV is based on the movement of the
         issue within a single bar and can be +1, -1 or zero.
 
-        The Accumulation/Distribution Line is interpreted by looking for a divergence in the direction of the
+        *The Accumulation/Distribution Line is interpreted by looking for a divergence in the direction of the
         indicator relative to price. If the Accumulation/Distribution Line is trending upward it indicates that the
         price may follow. Also, if the Accumulation/Distribution Line becomes flat while the price is still rising (
         or falling) then it signals an impending flattening of the price.
@@ -1056,6 +1138,10 @@ class HistoricalStock(Stock):
         above zero, it indicates a buy signal, and when it crosses below zero it indicates a sell signal. Also look
         for price divergence to indicate bullish or bearish conditions.
 
+        *The Accumulation/Distribution Line is interpreted by looking for a divergence in the direction of the
+        indicator relative to price. If the Accumulation/Distribution Line is trending upward it indicates that the
+        price may follow. Also, if the Accumulation/Distribution Line becomes flat while the price is still rising (
+        or falling) then it signals an impending flattening of the price.
 
         :param fast: The time period to use for the fast exponential moving average
         :param slow: The time period to use for the slow exponential moving average
@@ -1073,9 +1159,21 @@ class HistoricalStock(Stock):
         previous close, the volume is added to the running total, and when the close is lower than the previous close,
         the volume is subtracted from the running total.
 
-        To interpret the OBV, look for the OBV to move with the price or precede price moves. If the price moves
-        before the OBV, then it is a non-confirmed move. A series of rising peaks, or falling troughs, in the OBV
-        indicates a strong trend. If the OBV is flat, then the market is not trending.
+        *The theory behind OBV is based on the distinction between smart money – namely, institutional investors –
+        and less sophisticated retail investors. As mutual funds and pension funds begin to buy into an issue that
+        retail investors are selling, volume may increase even as the price remains relatively level. Eventually,
+        volume drives the price upward. At that point, larger investors begin to sell, and smaller investors begin
+        buying. Despite being plotted on a price chart and measured numerically, the actual individual quantitative
+        value of OBV is not relevant. The indicator itself is cumulative, while the time interval remains fixed by a
+        dedicated starting point, meaning the real number value of OBV arbitrarily depends on the start date.
+        Instead, traders and analysts look to the nature of OBV movements over time; the slope of the OBV line
+        carries all of the weight of analysis. Analysts look to volume numbers on the OBV to track large,
+        institutional investors. They treat divergences between volume and price as a synonym of the relationship
+        between "smart money" and the disparate masses, hoping to showcase opportunities for buying against incorrect
+        prevailing trends. For example, institutional money may drive up the price of an asset, then sell after other
+        investors jump on the bandwagon. To interpret the OBV, look for the OBV to move with the price or precede
+        price moves. If the price moves before the OBV, then it is a non-confirmed move. A series of rising peaks,
+        or falling troughs, in the OBV indicates a strong trend. If the OBV is flat, then the market is not trending.
 
         :param num_periods: The number of periods for each rolling calculation
         :return: Returns a pandas Series of calculated values

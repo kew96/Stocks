@@ -18,6 +18,7 @@ class Portfolio(models.Model):
     name = models.CharField(max_length=100, default='Test')
     cash = models.DecimalField(decimal_places=2, max_digits=100)
     inception = models.DateField(default=timezone.now)
+    fee_rate = models.IntegerField(default=0)
 
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
@@ -41,11 +42,21 @@ class Trade(PolymorphicModel):
     choices = (
         (buy, 'Buy'),
         (sell, 'Sell')
-    )
+        )
+
+    open = 'Open'
+    close = 'Close'
+
+    subchoices = (
+        (open, 'Open'),
+        (close, 'Close')
+        )
 
     id = models.AutoField(primary_key=True)
+    portfolio = models.ForeignKey('Portfolio', on_delete=models.CASCADE, related_name='trades')
     stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='trades')
     type = models.CharField(max_length=4, default=buy, choices=choices)
+    subtype = models.CharField(max_length=5, default=open, choices=subchoices)
     initial_price = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     shares = models.IntegerField(default=0)
     fee_rate = models.IntegerField(default=0)

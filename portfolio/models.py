@@ -19,7 +19,7 @@ class Portfolio(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, default='Test')
     cash = models.DecimalField(decimal_places=2, max_digits=100)
-    inception = models.DateField(default=timezone.now())
+    inception = models.DateField(default=timezone.now)
     fee_rate = models.IntegerField(default=0)
 
     def __str__(self):
@@ -65,7 +65,7 @@ class Trade(PolymorphicModel):
     fee_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     trade_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     total_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
-    initiated = models.DateTimeField(default=timezone.now())
+    initiated = models.DateTimeField(default=timezone.now)
     closed = models.DateTimeField(blank=True, null=True)
     gain_loss = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
     reason = models.TextField(default='NA')

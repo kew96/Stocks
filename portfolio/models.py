@@ -3,11 +3,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
-from dateutil.relativedelta import relativedelta
 from decimal import *
 
-from errors import NoTickerError
-from functions import stock
+from functions.stock import *
 
 getcontext().prec = 2
 
@@ -67,7 +65,8 @@ class Trade(PolymorphicModel):
     total_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     initiated = models.DateTimeField(default=timezone.now)
     closed = models.DateTimeField(blank=True, null=True)
-    gain_loss = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
+    gain_loss_value = models.DecimalField(decimal_places=2, max_digits=100, blank=True, null=True)
+    gain_loss_percent = models.DecimalField(decimal_places=6, max_digits=100, blank=True, null=True)
     reason = models.TextField(default='NA')
 
 
@@ -77,7 +76,7 @@ class Long(Trade):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = stock.Stock(self.stock.ticker)
+        dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         return current_price - Decimal(str(self.initial_price))
 
@@ -88,7 +87,7 @@ class Short(Trade):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = stock.Stock(self.stock.ticker)
+        dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         return Decimal(str(self.initial_price)) - current_price
 
@@ -141,29 +140,29 @@ class ShortCall(Option):
         return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
 
     def current_value(self):
-        stock = Stock(self.stock.ticker)
-        current_price = Decimal(stock.current['05. price'])
+        temp_stock = Stock(self.stock.ticker)
+        current_price = Decimal(temp_stock.current['05. price'])
         option_value = self.strike - current_price + self.option_cost
         return min(option_value, self.option_cost)
 
 
-class Stock(models.Model):  # TODO: finish
-    ticker = models.CharField(default='None', max_length=10, unique=True, primary_key=True)
-    name = models.CharField(default='None', max_length=200, unique=True)
-    summary = models.TextField(default='NA')
-    sector = models.CharField(default='NA', max_length=100)
-    industry = models.CharField(default='NA', max_length=300)
-    dividend_rate = models.DecimalField(null=True, decimal_places=2, max_digits=100)
-    beta = models.DecimalField(null=True, decimal_places=6, max_digits=100)
-    trailing_PE = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+class Stock(models.Model):
+    ticker = models.CharField(max_length=10, unique=True, primary_key=True)
+    name = models.CharField(max_length=200, unique=True)
+    summary = models.TextField()
+    sector = models.CharField(max_length=100)
+    industry = models.CharField(max_length=300)
+    dividend_rate = models.DecimalField(decimal_places=2, max_digits=100)
+    beta = models.DecimalField(decimal_places=6, max_digits=100)
+    trailing_PE = models.DecimalField(decimal_places=6, max_digits=100)
     market_cap = models.PositiveIntegerField(null=True)
-    price_to_sales_12m = models.DecimalField(null=True, decimal_places=6, max_digits=100)
-    forward_PE = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+    price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
+    forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
     tradeable = models.BooleanField(default=True)
-    dividend_yield = models.DecimalField(null=True, decimal_places=6, max_digits=100)
-    forward_EPS = models.DecimalField(null=True, decimal_places=2, max_digits=100)
-    profit_margin = models.DecimalField(null=True, decimal_places=10, max_digits=100)
-    trailing_EPS = models.DecimalField(null=True, decimal_places=6, max_digits=100)
+    dividend_yield = models.DecimalField(decimal_places=6, max_digits=100)
+    forward_EPS = models.DecimalField(decimal_places=2, max_digits=100)
+    profit_margin = models.DecimalField(decimal_places=10, max_digits=100)
+    trailing_EPS = models.DecimalField(decimal_places=6, max_digits=100)
 
     def __str__(self):
         return self.ticker
@@ -172,7 +171,7 @@ class Stock(models.Model):  # TODO: finish
         if self.ticker == 'None' and self.name == 'None':
             raise NoTickerError()
         elif self.ticker == 'None':
-            self.ticker = stock.ticker_search(self.name)[0][0]['1. symbol']
+            self.ticker = ticker_search(self.name)[0][0]['1. symbol']
         elif self.name == 'None':
-            self.name = stock.ticker_search(self.ticker)[0][0]['2. name']
+            self.name = ticker_search(self.ticker)[0][0]['2. name']
         super().save(*args, **kwargs)

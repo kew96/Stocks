@@ -1,11 +1,13 @@
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
 from decimal import *
+from dateutil.relativedelta import relativedelta
 
-from functions.stock import *
+from Stocks.functions.errors.errors import NoTickerError
+from Stocks.functions.stock import ticker_search
+
 
 getcontext().prec = 2
 

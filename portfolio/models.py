@@ -5,8 +5,8 @@ from polymorphic.models import PolymorphicModel
 from decimal import *
 from dateutil.relativedelta import relativedelta
 
-from Stocks.functions.errors.errors import NoTickerError
-from Stocks.functions.stock import ticker_search
+from functions.errors.errors import NoTickerError
+from functions.stock import ticker_search
 
 
 getcontext().prec = 2

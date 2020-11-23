@@ -40,7 +40,7 @@ class Stock:
             self.market_cap = self.__gen_info['marketCap']
             self.price_to_sales_12m = self.__gen_info['priceToSalesTrailing12Months']
             self.forward_PE = self.__gen_info['forwardPE']
-            self.tradeable = self.__gen_info['tradeable']
+            self.tradable = self.__gen_info['tradeable']
             self.dividend_yield = self.__gen_info['dividendYield']
             self.forward_EPS = self.__gen_info['forwardEps']
             self.profit_margin = self.__gen_info['profitMargins']

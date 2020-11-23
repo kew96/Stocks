@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 
 from functions.errors.errors import NoTickerError
 from functions.stock import ticker_search
+from functions.stock import Stock as ClassStock
 
 
 getcontext().prec = 2
@@ -20,7 +21,7 @@ class Portfolio(models.Model):
     name = models.CharField(max_length=100, default='Test')
     cash = models.DecimalField(decimal_places=2, max_digits=100)
     inception = models.DateField(default=timezone.now)
-    fee_rate = models.IntegerField(default=0)
+    fee_rate = models.FloatField(default=0)
 
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
@@ -78,8 +79,8 @@ class Long(Trade):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
+        dummy = ClassStock(self.stock.ticker)
+        current_price = Decimal(dummy.bid)
         return current_price - Decimal(str(self.initial_price))
 
 
@@ -90,7 +91,7 @@ class Short(Trade):
 
     def current_value(self):
         dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
+        current_price = Decimal(dummy.ask)
         return Decimal(str(self.initial_price)) - current_price
 
 
@@ -160,7 +161,7 @@ class Stock(models.Model):
     market_cap = models.PositiveIntegerField(null=True)
     price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
     forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
-    tradeable = models.BooleanField(default=True)
+    tradable = models.BooleanField(default=True)
     dividend_yield = models.DecimalField(decimal_places=6, max_digits=100)
     forward_EPS = models.DecimalField(decimal_places=2, max_digits=100)
     profit_margin = models.DecimalField(decimal_places=10, max_digits=100)

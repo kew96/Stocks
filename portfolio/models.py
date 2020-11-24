@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 
 from functions.errors.errors import NoTickerError
 from functions.stock import ticker_search
-from functions.stock import Stock as ClassStock
+import functions.stock
 
 
 getcontext().prec = 2
@@ -79,7 +79,7 @@ class Long(Trade):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = ClassStock(self.stock.ticker)
+        dummy = functions.stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.bid)
         return current_price - Decimal(str(self.initial_price))
 
@@ -168,7 +168,7 @@ class Stock(models.Model):
     trailing_EPS = models.DecimalField(decimal_places=6, max_digits=100)
 
     def __str__(self):
-        stock_obj = ClassStock(self.ticker, verbose=False)
+        stock_obj = functions.stock.Stock(self.ticker, verbose=False)
         return f'{self.ticker} {stock_obj.bid}/{stock_obj.ask}'
 
     def save(self, *args, **kwargs):
@@ -179,7 +179,7 @@ class Stock(models.Model):
         elif self.name == '':
             self.name = ticker_search(self.ticker)[0][0]['2. name']
 
-        stock_obj = ClassStock(self.ticker)
+        stock_obj = functions.stock.Stock(self.ticker)
 
         if not self.summary:
             self.summary = stock_obj.summary

@@ -278,7 +278,7 @@ class HistoricalStock(Stock):
 
         The T3 is a type of moving average, or smoothing function. It is based on the DEMA. The T3 takes the DEMA
         calculation and adds a vfactor which is between zero and 1. The resultant function is called the GD,
-        or Generalized DEMA. A GD with vfactorof 1 is the same as the DEMA. A GD with a vfactor of zero is the same
+        or Generalized DEMA. A GD with vfactor of 1 is the same as the DEMA. A GD with a vfactor of zero is the same
         as an Exponential Moving Average. The T3 typically uses a vfactor of 0.7.
 
         :param num_periods: specifies the number of periods for each calculation

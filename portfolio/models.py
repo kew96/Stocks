@@ -168,7 +168,7 @@ class Stock(models.Model):
     trailing_EPS = models.DecimalField(decimal_places=6, max_digits=100)
 
     def __str__(self):
-        stock_obj = functions.stock.Stock(self.ticker, verbose=False)
+        stock_obj = functions.stock.Stock(self.ticker, self.name, verbose=False)
         return f'{self.ticker} {stock_obj.bid}/{stock_obj.ask}'
 
     def save(self, *args, **kwargs):

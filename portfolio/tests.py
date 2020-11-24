@@ -61,7 +61,7 @@ class StockTest(TestCase):
                  market_cap=aapl.market_cap,
                  price_to_sales_12m=aapl.price_to_sales_12m,
                  forward_PE=aapl.forward_PE,
-                 tradeable=aapl.tradable,
+                 tradable=aapl.tradable,
                  dividend_yield=aapl.dividend_yield,
                  forward_EPS=aapl.forward_EPS,
                  profit_margin=aapl.profit_margin,

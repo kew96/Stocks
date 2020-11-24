@@ -158,7 +158,7 @@ class Stock(models.Model):
     dividend_rate = models.DecimalField(decimal_places=2, max_digits=100)
     beta = models.DecimalField(decimal_places=6, max_digits=100)
     trailing_PE = models.DecimalField(decimal_places=6, max_digits=100)
-    market_cap = models.PositiveIntegerField(null=True)
+    market_cap = models.PositiveBigIntegerField(null=True)
     price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
     forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
     tradable = models.BooleanField(default=True)
@@ -171,10 +171,42 @@ class Stock(models.Model):
         return self.ticker
 
     def save(self, *args, **kwargs):
-        if self.ticker == 'None' and self.name == 'None':
+        if self.ticker == '' and self.name == '':
             raise NoTickerError()
-        elif self.ticker == 'None':
+        elif self.ticker == '':
             self.ticker = ticker_search(self.name)[0][0]['1. symbol']
-        elif self.name == 'None':
+        elif self.name == '':
             self.name = ticker_search(self.ticker)[0][0]['2. name']
+
+        stock_obj = ClassStock(self.ticker)
+
+        if not self.summary:
+            self.summary = stock_obj.summary
+        if not self.sector:
+            self.sector = stock_obj.sector
+        if not self.industry:
+            self.industry = stock_obj.industry
+        if not self.dividend_rate:
+            self.dividend_rate = stock_obj.dividend_rate
+        if not self.beta:
+            self.beta = stock_obj.beta
+        if not self.trailing_PE:
+            self.trailing_PE = stock_obj.trailing_PE
+        if not self.market_cap:
+            self.market_cap = stock_obj.market_cap
+        if not self.price_to_sales_12m:
+            self.price_to_sales_12m = stock_obj.price_to_sales_12m
+        if not self.forward_PE:
+            self.forward_PE = stock_obj.forward_PE
+        if not self.tradable:
+            self.tradable = stock_obj.tradable
+        if not self.dividend_yield:
+            self.dividend_yield = stock_obj.dividend_yield
+        if not self.forward_EPS:
+            self.forward_EPS = stock_obj.forward_EPS
+        if not self.profit_margin:
+            self.profit_margin = stock_obj.profit_margin
+        if not self.trailing_EPS:
+            self.trailing_EPS = stock_obj.trailing_EPS
+
         super().save(*args, **kwargs)

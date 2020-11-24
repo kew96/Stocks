@@ -12,15 +12,15 @@ from datetime import date
 class PortfolioTestCase(TestCase):
 
     def setUp(self):
-        test1 = Portfolio.objects.create(name='Test1',
-                                         cash=Decimal('2121.21'),
-                                         inception=date(2019, 6, 7),
-                                         fee_rate=1.2)
+        Portfolio.objects.create(name='Test1',
+                                 cash=Decimal('2121.21'),
+                                 inception=date(2019, 6, 7),
+                                 fee_rate=1.2)
 
-        test2 = Portfolio.objects.create(name='Test2',
-                                         cash=Decimal('109287.74'),
-                                         inception=date(2010, 1, 12),
-                                         fee_rate=2.1)
+        Portfolio.objects.create(name='Test2',
+                                 cash=Decimal('109287.74'),
+                                 inception=date(2010, 1, 12),
+                                 fee_rate=2.1)
 
     def test_portfolio_cash(self):
         test1 = Portfolio.objects.get(name='Test1')
@@ -45,120 +45,86 @@ class PortfolioTestCase(TestCase):
 
 
 class StockTest(TestCase):
+    aapl = functions.stock.Stock(ticker='AAPL', name='Apple Inc.')
 
     def setUp(self):
-        aapl = functions.stock.Stock('AAPL')
-
-        Stock.objects.create(
-                 ticker=aapl.ticker,
-                 name=aapl.name,
-                 summary=aapl.summary,
-                 sector=aapl.sector,
-                 industry=aapl.industry,
-                 dividend_rate=aapl.dividend_rate,
-                 beta=aapl.beta,
-                 trailing_PE=aapl.trailing_PE,
-                 market_cap=aapl.market_cap,
-                 price_to_sales_12m=aapl.price_to_sales_12m,
-                 forward_PE=aapl.forward_PE,
-                 tradable=aapl.tradable,
-                 dividend_yield=aapl.dividend_yield,
-                 forward_EPS=aapl.forward_EPS,
-                 profit_margin=aapl.profit_margin,
-                 trailing_EPS=aapl.trailing_EPS
-                 )
+        Stock.objects.create(ticker='AAPL')
 
     def test_ticker(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.ticker, aapl.ticker)
+        self.assertEqual(stock1.ticker, self.aapl.ticker)
 
     def test_name(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.name, aapl.name)
+        self.assertEqual(stock1.name, self.aapl.name)
 
     def test_summary(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.summary, aapl.summary)
+        self.assertEqual(stock1.summary, self.aapl.summary)
 
     def test_sector(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.sector, aapl.sector)
+        self.assertEqual(stock1.sector, self.aapl.sector)
 
     def test_industry(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.industry, aapl.industry)
+        self.assertEqual(stock1.industry, self.aapl.industry)
 
     def test_dividend_rate(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.dividend_rate, aapl.dividend_rate)
+        self.assertEqual(stock1.dividend_rate, Decimal(str(self.aapl.dividend_rate)))
 
     def test_beta(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.beta, aapl.beta)
+        self.assertEqual(stock1.beta, Decimal(str(self.aapl.beta)))
 
     def test_trailing_PE(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.trailing_PE, aapl.trailing_PE)
+        self.assertAlmostEqual(stock1.trailing_PE, Decimal(str(self.aapl.trailing_PE)), 1)
 
     def test_market_cap(self):
-        aapl = functions.stock.Stock('AAPL')
-        stock1 = Stock.objects.get(ticker='AAPL')
+        stock1 = Stock.objects.get(ticker='AAPL', name='Apple Inc.')
 
-        self.assertEqual(stock1.market_cap, aapl.market_cap)
+        self.assertAlmostEquals(stock1.market_cap, self.aapl.market_cap, places=-12)
+        # self.assertEqual(stock1.market_cap, self.aapl.market_cap)
 
     def test_price_to_sales_12m(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.price_to_sales_12m, aapl.price_to_sales_12m)
+        self.assertAlmostEqual(stock1.price_to_sales_12m, Decimal(str(self.aapl.price_to_sales_12m)), 1)
 
     def test_forward_PE(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.forward_PE, aapl.forward_PE)
+        self.assertAlmostEqual(stock1.forward_PE, Decimal(str(self.aapl.forward_PE)), 1)
 
     def test_tradable(self):
-        stock1 = Stock.objects.get(ticker='AAPL')
-
-        self.assertTrue(stock1.tradable)
+        self.assertTrue(self.aapl.tradable)
 
     def test_dividend_yield(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.dividend_yield, aapl.dividend_yield)
+        self.assertAlmostEqual(stock1.dividend_yield, Decimal(str(self.aapl.dividend_yield)), 6)
 
     def test_forward_EPS(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.forward_EPS, aapl.forward_EPS)
+        self.assertEqual(stock1.forward_EPS, Decimal(str(self.aapl.forward_EPS)))
 
     def test_profit_margin(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.profit_margin, aapl.profit_margin)
+        self.assertAlmostEqual(stock1.profit_margin, Decimal(str(self.aapl.profit_margin)), 5)
 
     def test_trailing_EPS(self):
-        aapl = functions.stock.Stock('AAPL')
         stock1 = Stock.objects.get(ticker='AAPL')
 
-        self.assertEqual(stock1.trailing_EPS, aapl.trailing_EPS)
+        self.assertAlmostEqual(stock1.trailing_EPS, Decimal(str(self.aapl.trailing_EPS)), 2)

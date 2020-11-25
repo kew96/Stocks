@@ -90,7 +90,7 @@ class Short(Trade):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = Stock(self.stock.ticker)
+        dummy = functions.stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.ask)
         return Decimal(str(self.initial_price)) - current_price
 
@@ -106,7 +106,7 @@ class LongPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         option_value = self.strike - current_price - self.option_cost
@@ -118,7 +118,7 @@ class LongCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         option_value = current_price - self.strike - self.option_cost
@@ -130,7 +130,7 @@ class ShortPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-ShortPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         option_value = current_price - self.strike + self.option_cost
@@ -142,7 +142,7 @@ class ShortCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         temp_stock = Stock(self.stock.ticker)
         current_price = Decimal(temp_stock.current['05. price'])
         option_value = self.strike - current_price + self.option_cost

@@ -8,7 +8,7 @@ from talib import abstract as ta
 
 from functions.alias.alias import Alias, aliased
 from functions.errors import NoTickerError
-from functions.helper_functions.stock_helpers import check_convert_date, check_list_options, check_matype, \
+from functions.helper_functions.general_helpers import check_convert_date, check_list_options, check_matype, \
     check_series_type
 
 

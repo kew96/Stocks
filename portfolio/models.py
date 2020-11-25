@@ -96,19 +96,18 @@ class Short(Trade):
 
 
 class Option(Trade):
-
     american = 'American'
     european = 'European'
 
     option_choices = (
         (american, 'American'),
         (european, 'European')
-    )
+        )
 
     expiration = models.DateField(default=timezone.now() + relativedelta(months=3))
     strike = models.DecimalField(decimal_places=2, max_digits=100)
     option_cost = models.DecimalField(decimal_places=2, max_digits=100)
-    type = models.CharField(max_length=8, default=american, choices=option_choices)
+    option_type = models.CharField(max_length=8, default=american, choices=option_choices)
 
 
 class LongPut(Option):

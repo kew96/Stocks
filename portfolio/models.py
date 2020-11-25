@@ -1,11 +1,14 @@
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
 from decimal import *
+from dateutil.relativedelta import relativedelta
 
-from functions.stock import *
+from functions.errors.errors import NoTickerError
+from functions.stock import ticker_search
+import functions.stock
+
 
 getcontext().prec = 2
 
@@ -18,7 +21,7 @@ class Portfolio(models.Model):
     name = models.CharField(max_length=100, default='Test')
     cash = models.DecimalField(decimal_places=2, max_digits=100)
     inception = models.DateField(default=timezone.now)
-    fee_rate = models.IntegerField(default=0)
+    fee_rate = models.FloatField(default=0)
 
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
@@ -76,8 +79,8 @@ class Long(Trade):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
+        dummy = functions.stock.Stock(self.stock.ticker)
+        current_price = Decimal(dummy.bid)
         return current_price - Decimal(str(self.initial_price))
 
 
@@ -87,8 +90,8 @@ class Short(Trade):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
     def current_value(self):
-        dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
+        dummy = functions.stock.Stock(self.stock.ticker)
+        current_price = Decimal(dummy.ask)
         return Decimal(str(self.initial_price)) - current_price
 
 
@@ -103,7 +106,7 @@ class LongPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         option_value = self.strike - current_price - self.option_cost
@@ -115,7 +118,7 @@ class LongCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         option_value = current_price - self.strike - self.option_cost
@@ -127,7 +130,7 @@ class ShortPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-ShortPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         dummy = Stock(self.stock.ticker)
         current_price = Decimal(dummy.current['05. price'])
         option_value = current_price - self.strike + self.option_cost
@@ -139,7 +142,7 @@ class ShortCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):
+    def current_value(self):  # TODO: Create American option pricing tree
         temp_stock = Stock(self.stock.ticker)
         current_price = Decimal(temp_stock.current['05. price'])
         option_value = self.strike - current_price + self.option_cost
@@ -155,23 +158,56 @@ class Stock(models.Model):
     dividend_rate = models.DecimalField(decimal_places=2, max_digits=100)
     beta = models.DecimalField(decimal_places=6, max_digits=100)
     trailing_PE = models.DecimalField(decimal_places=6, max_digits=100)
-    market_cap = models.PositiveIntegerField(null=True)
+    market_cap = models.PositiveBigIntegerField(null=True)
     price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
     forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
-    tradeable = models.BooleanField(default=True)
+    tradable = models.BooleanField(default=True)
     dividend_yield = models.DecimalField(decimal_places=6, max_digits=100)
     forward_EPS = models.DecimalField(decimal_places=2, max_digits=100)
     profit_margin = models.DecimalField(decimal_places=10, max_digits=100)
     trailing_EPS = models.DecimalField(decimal_places=6, max_digits=100)
 
     def __str__(self):
-        return self.ticker
+        stock_obj = functions.stock.Stock(self.ticker, self.name, verbose=False)
+        return f'{self.ticker} {stock_obj.bid}/{stock_obj.ask}'
 
     def save(self, *args, **kwargs):
-        if self.ticker == 'None' and self.name == 'None':
+        if self.ticker == '' and self.name == '':
             raise NoTickerError()
-        elif self.ticker == 'None':
+        elif self.ticker == '':
             self.ticker = ticker_search(self.name)[0][0]['1. symbol']
-        elif self.name == 'None':
+        elif self.name == '':
             self.name = ticker_search(self.ticker)[0][0]['2. name']
+
+        stock_obj = functions.stock.Stock(self.ticker)
+
+        if not self.summary:
+            self.summary = stock_obj.summary
+        if not self.sector:
+            self.sector = stock_obj.sector
+        if not self.industry:
+            self.industry = stock_obj.industry
+        if not self.dividend_rate:
+            self.dividend_rate = stock_obj.dividend_rate
+        if not self.beta:
+            self.beta = stock_obj.beta
+        if not self.trailing_PE:
+            self.trailing_PE = stock_obj.trailing_PE
+        if not self.market_cap:
+            self.market_cap = stock_obj.market_cap
+        if not self.price_to_sales_12m:
+            self.price_to_sales_12m = stock_obj.price_to_sales_12m
+        if not self.forward_PE:
+            self.forward_PE = stock_obj.forward_PE
+        if not self.tradable:
+            self.tradable = stock_obj.tradable
+        if not self.dividend_yield:
+            self.dividend_yield = stock_obj.dividend_yield
+        if not self.forward_EPS:
+            self.forward_EPS = stock_obj.forward_EPS
+        if not self.profit_margin:
+            self.profit_margin = stock_obj.profit_margin
+        if not self.trailing_EPS:
+            self.trailing_EPS = stock_obj.trailing_EPS
+
         super().save(*args, **kwargs)

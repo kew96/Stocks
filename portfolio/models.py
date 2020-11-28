@@ -3,11 +3,13 @@ from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
 from decimal import *
+from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from functions.errors.errors import NoTickerError
 from functions.stock import ticker_search
 import functions.stock
+from functions.helper_functions.option_valuation import black_scholes_merton, binomial_pricing_tree
 
 
 getcontext().prec = 2
@@ -115,11 +117,30 @@ class LongPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):  # TODO: Create American option pricing tree
-        dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
-        option_value = self.strike - current_price - self.option_cost
-        return max(option_value, self.option_cost)
+    def current_value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(),
+                      tree=False):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        if self.option_type == 'American':
+            return binomial_pricing_tree(data=dummy.get_hist,
+                                         column=column,
+                                         strike=strike,
+                                         rf=rf,
+                                         steps=steps,
+                                         end_date=end_date,
+                                         start_date=start_date,
+                                         tree=tree)
+        else:
+            return black_scholes_merton(data=dummy.get_hist,
+                                        column=column,
+                                        strike=strike,
+                                        rf=rf,
+                                        end_date=end_date,
+                                        start_date=start_date,
+                                        call=False)
 
 
 class LongCall(Option):
@@ -127,11 +148,19 @@ class LongCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):  # TODO: Create American option pricing tree
-        dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
-        option_value = current_price - self.strike - self.option_cost
-        return max(option_value, self.option_cost)
+    def current_value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        return black_scholes_merton(data=dummy.get_hist,
+                                    column=column,
+                                    strike=strike,
+                                    rf=rf,
+                                    end_date=end_date,
+                                    start_date=start_date,
+                                    call=True)
 
 
 class ShortPut(Option):
@@ -139,11 +168,41 @@ class ShortPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-ShortPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):  # TODO: Create American option pricing tree
-        dummy = Stock(self.stock.ticker)
-        current_price = Decimal(dummy.current['05. price'])
-        option_value = current_price - self.strike + self.option_cost
-        return min(option_value, self.option_cost)
+    def current_value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(),
+                      tree=False):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        if self.option_type == 'American':
+            if tree:
+                stock_tree, option_tree = binomial_pricing_tree(data=dummy.get_hist,
+                                                                column=column,
+                                                                strike=strike,
+                                                                rf=rf,
+                                                                steps=steps,
+                                                                end_date=end_date,
+                                                                start_date=start_date,
+                                                                tree=False)
+                return stock_tree, -1 * option_tree
+            else:
+                return -binomial_pricing_tree(data=dummy.get_hist,
+                                              column=column,
+                                              strike=strike,
+                                              rf=rf,
+                                              steps=steps,
+                                              end_date=end_date,
+                                              start_date=start_date,
+                                              tree=False)
+        else:
+            return -black_scholes_merton(data=dummy.get_hist,
+                                         column=column,
+                                         strike=strike,
+                                         rf=rf,
+                                         end_date=end_date,
+                                         start_date=start_date,
+                                         call=False)
 
 
 class ShortCall(Option):
@@ -151,11 +210,19 @@ class ShortCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self):  # TODO: Create American option pricing tree
-        temp_stock = Stock(self.stock.ticker)
-        current_price = Decimal(temp_stock.current['05. price'])
-        option_value = self.strike - current_price + self.option_cost
-        return min(option_value, self.option_cost)
+    def current_value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        return -black_scholes_merton(data=dummy.get_hist,
+                                     column=column,
+                                     strike=strike,
+                                     rf=rf,
+                                     end_date=end_date,
+                                     start_date=start_date,
+                                     call=True)
 
 
 class Stock(models.Model):

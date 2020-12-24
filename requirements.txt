@@ -1,4 +1,4 @@
-aiohttp==4.0.0a1
+aiohttp<4.0,>=3.0
 alpha-vantage==2.2.0
 asgiref==3.2.10
 async-timeout==4.0.0a2
@@ -22,7 +22,6 @@ PyYAML==5.3.1
 requests==2.24.0
 six==1.15.0
 sqlparse==0.3.1
-TA-Lib==0.4.19
 typing-extensions==3.7.4.3
 urllib3==1.25.10
 yarl==1.6.0

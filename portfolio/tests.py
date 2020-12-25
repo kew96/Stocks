@@ -158,3 +158,33 @@ class LongTest(TestCase):
         trade = Long.objects.get(stock__ticker='AAPL')
 
         self.assertEquals(trade.current_value(), Decimal(str(self.aapl.bid))-trade.initial_price)
+
+
+class ShortTest(TestCase):
+    aapl = functions.stock.Stock(ticker='AAPL', name='Apple Inc.')
+
+    def setUp(self):
+        portfolio = Portfolio.objects.create(name='Test1',
+                                             cash=Decimal('100000'),
+                                             inception=date(2019, 6, 7),
+                                             fee_rate=1)
+
+        Stock.objects.create(ticker='AAPL')
+
+        Short.objects.create(
+            portfolio=portfolio,
+            stock=Stock.objects.get(ticker='AAPL'),
+            type='Sell',
+            subtype='Open',
+            initial_price=Decimal('100'),
+            shares=1,
+            fee_rate=portfolio.fee_rate,
+            fee_cost=portfolio.fee_rate*Decimal('100'),
+            trade_cost=Decimal('100'),
+            total_cost=Decimal('100')+portfolio.fee_rate*Decimal('100')
+        )
+
+    def test_current_value(self):
+        trade = Short.objects.get(stock__ticker='AAPL')
+
+        self.assertEquals(trade.current_value(), trade.initial_price-Decimal(str(self.aapl.bid)))

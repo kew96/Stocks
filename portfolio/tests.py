@@ -128,3 +128,33 @@ class StockTest(TestCase):
         stock1 = Stock.objects.get(ticker='AAPL')
 
         self.assertAlmostEqual(stock1.trailing_EPS, Decimal(str(self.aapl.trailing_EPS)), 2)
+
+
+class LongTest(TestCase):
+    aapl = functions.stock.Stock(ticker='AAPL', name='Apple Inc.')
+
+    def setUp(self):
+        portfolio = Portfolio.objects.create(name='Test1',
+                                             cash=Decimal('100000'),
+                                             inception=date(2019, 6, 7),
+                                             fee_rate=1)
+
+        Stock.objects.create(ticker='AAPL')
+
+        Long.objects.create(
+            portfolio=portfolio,
+            stock=Stock.objects.get(ticker='AAPL'),
+            type='Buy',
+            subtype='Open',
+            initial_price=Decimal('100'),
+            shares=1,
+            fee_rate=portfolio.fee_rate,
+            fee_cost=portfolio.fee_rate*Decimal('100'),
+            trade_cost=Decimal('100'),
+            total_cost=Decimal('100')+portfolio.fee_rate*Decimal('100')
+        )
+
+    def test_current_value(self):
+        trade = Long.objects.get(stock__ticker='AAPL')
+
+        self.assertEquals(trade.current_value(), Decimal(str(self.aapl.bid))-trade.initial_price)

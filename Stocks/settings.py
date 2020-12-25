@@ -74,14 +74,6 @@ WSGI_APPLICATION = 'Stocks.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'stocks',
-    #     'USER': 'kyle_walsh',
-    #     'PASSWORD': 'kewkew33',
-    #     'HOST': 'localhost',
-    #     'PORT': ''
-    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ['DB_NAME'],

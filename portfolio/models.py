@@ -83,7 +83,7 @@ class Long(Trade):
     def current_value(self):
         dummy = functions.stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.bid)
-        return current_price - Decimal(str(self.initial_price))
+        return Decimal(str(current_price)) - self.initial_price
 
 
 class Short(Trade):
@@ -237,7 +237,7 @@ class Stock(models.Model):
     market_cap = models.PositiveBigIntegerField(null=True)
     price_to_sales_12m = models.DecimalField(decimal_places=6, max_digits=100)
     forward_PE = models.DecimalField(decimal_places=6, max_digits=100)
-    tradable = models.BooleanField(default=True)
+    tradeable = models.BooleanField(default=True)
     dividend_yield = models.DecimalField(decimal_places=6, max_digits=100)
     forward_EPS = models.DecimalField(decimal_places=2, max_digits=100)
     profit_margin = models.DecimalField(decimal_places=10, max_digits=100)
@@ -275,8 +275,8 @@ class Stock(models.Model):
             self.price_to_sales_12m = stock_obj.price_to_sales_12m
         if not self.forward_PE:
             self.forward_PE = stock_obj.forward_PE
-        if not self.tradable:
-            self.tradable = stock_obj.tradable
+        if not self.tradeable:
+            self.tradeable = stock_obj.tradable
         if not self.dividend_yield:
             self.dividend_yield = stock_obj.dividend_yield
         if not self.forward_EPS:

@@ -81,7 +81,7 @@ class Long(Trade):
     def current_value(self):
         dummy = functions.stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.bid)
-        return current_price - Decimal(str(self.initial_price))
+        return Decimal(str(current_price)) - self.initial_price
 
 
 class Short(Trade):

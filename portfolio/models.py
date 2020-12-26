@@ -75,6 +75,18 @@ class Trade(PolymorphicModel):
     reason = models.TextField(default='NA')
 
 
+class TradeValueHistory(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    trade = models.ForeignKey('Trade', on_delete=models.CASCADE, related_name='value_history')
+    date = models.DateField(default=timezone.now)
+    asset_price = models.DecimalField(decimal_places=2, max_digits=100)
+    unrealized_gain_loss = models.DecimalField(decimal_places=2, max_digits=100, default=0)
+
+    def __str__(self):
+        return f'{self.trade}' + ' {' + f'{self.date}' + '}'
+
+
 class Long(Trade):
 
     def __str__(self):

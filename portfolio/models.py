@@ -38,6 +38,8 @@ class Portfolio(models.Model):
     # TODO: overall performance
 
 
+# TODO: PortfolioValueHistory
+
 class Trade(PolymorphicModel):
     # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
 

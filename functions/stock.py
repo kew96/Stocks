@@ -169,7 +169,7 @@ class HistoricalStock(Stock):
                 self.__hist_info = yf.download(self.ticker, start=self.start, end=self.end,
                                                interval=self.interval, auto_adjust=self.adjusted,
                                                prepost=self.prepost, threads=True)
-        self.__hist_info.columns = self.__hist_info.columns.str.lower().replace(' ', '_')
+        self.__hist_info.columns = self.__hist_info.columns.str.lower().str.replace(' ', '_')
         self.__hist_info.volume = self.__hist_info.volume.astype(float)
 
     def __str__(self):

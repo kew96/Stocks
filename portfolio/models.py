@@ -11,7 +11,6 @@ from functions.stock import ticker_search
 import functions.stock
 from functions.helper_functions.option_valuation import black_scholes_merton, binomial_pricing_tree
 
-
 getcontext().prec = 2
 
 
@@ -49,7 +48,7 @@ class Trade(PolymorphicModel):
     choices = (
         (buy, 'Buy'),
         (sell, 'Sell')
-        )
+    )
 
     open = 'Open'
     close = 'Close'
@@ -57,7 +56,7 @@ class Trade(PolymorphicModel):
     subchoices = (
         (open, 'Open'),
         (close, 'Close')
-        )
+    )
 
     id = models.AutoField(primary_key=True)
     portfolio = models.ForeignKey('Portfolio', on_delete=models.CASCADE, related_name='trades')
@@ -78,7 +77,6 @@ class Trade(PolymorphicModel):
 
 
 class TradeValueHistory(models.Model):
-
     id = models.AutoField(primary_key=True)
     trade = models.ForeignKey('Trade', on_delete=models.CASCADE, related_name='value_history')
     date = models.DateField(default=timezone.now)
@@ -122,7 +120,7 @@ class Option(Trade):
     option_choices = (
         (american, 'American'),
         (european, 'European')
-        )
+    )
 
     expiration = models.DateField(default=timezone.now() + relativedelta(months=3))
     strike = models.DecimalField(decimal_places=2, max_digits=100)
@@ -135,13 +133,15 @@ class LongPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongPut-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(),
-                      tree=False):
+    def value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(), tree=False):
         if strike is None:
             strike = self.strike
         if end_date is None:
             end_date = self.expiration
-        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
         if self.option_type == 'American':
             return binomial_pricing_tree(data=dummy.get_hist,
                                          column=column,
@@ -166,12 +166,15 @@ class LongCall(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
 
-    def current_value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+    def value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
         if strike is None:
             strike = self.strike
         if end_date is None:
             end_date = self.expiration
-        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
         return black_scholes_merton(data=dummy.get_hist,
                                     column=column,
                                     strike=strike,
@@ -192,7 +195,10 @@ class ShortPut(Option):
             strike = self.strike
         if end_date is None:
             end_date = self.expiration
-        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
         if self.option_type == 'American':
             if tree:
                 stock_tree, option_tree = binomial_pricing_tree(data=dummy.get_hist,
@@ -233,7 +239,10 @@ class ShortCall(Option):
             strike = self.strike
         if end_date is None:
             end_date = self.expiration
-        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker, name=self.stock.name)
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
         return -black_scholes_merton(data=dummy.get_hist,
                                      column=column,
                                      strike=strike,

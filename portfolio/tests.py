@@ -107,7 +107,7 @@ class StockTest(TestCase):
         self.assertAlmostEqual(stock1.forward_PE, Decimal(str(self.aapl.forward_PE)), 1)
 
     def test_tradeable(self):
-        self.assertTrue(self.aapl.tradable)
+        self.assertTrue(self.aapl.tradeable)
 
     def test_dividend_yield(self):
         stock1 = Stock.objects.get(ticker='AAPL')

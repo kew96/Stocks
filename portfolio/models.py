@@ -94,6 +94,20 @@ class Long(Trade):
     def __str__(self):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
+    def value(self, dt=date.today()):
+        if dt == date.today():
+            stock_data = functions.stock.Stock(ticker=self.stock.ticker,
+                                               name=self.stock.name,
+                                               verbose=False)
+            price = Decimal(str(stock_data.bid))
+        else:
+            stock_data = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                         name=self.stock.name,
+                                                         start=dt,
+                                                         end=dt+relativedelta(days=1),
+                                                         verbose=False)
+            price = Decimal(str(stock_data.get_hist.adj_close[0]))
+
     def current_value(self):
         dummy = functions.stock.Stock(self.stock.ticker)
         current_price = Decimal(dummy.bid)
@@ -290,7 +304,7 @@ class Stock(models.Model):
         if not self.forward_PE:
             self.forward_PE = stock_obj.forward_PE
         if not self.tradeable:
-            self.tradeable = stock_obj.tradable
+            self.tradeable = stock_obj.tradeable
         if not self.dividend_yield:
             self.dividend_yield = stock_obj.dividend_yield
         if not self.forward_EPS:

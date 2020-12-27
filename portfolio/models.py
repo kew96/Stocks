@@ -94,24 +94,12 @@ class Long(Trade):
     def __str__(self):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
 
-    def value(self, dt=date.today()):
+    def value(self, dt=date.today(), column='adj_close'):
         if dt == date.today():
-            stock_data = functions.stock.Stock(ticker=self.stock.ticker,
-                                               name=self.stock.name,
-                                               verbose=False)
-            price = Decimal(str(stock_data.bid))
+            price = self.stock.get_bid()
         else:
-            stock_data = functions.stock.HistoricalStock(ticker=self.stock.ticker,
-                                                         name=self.stock.name,
-                                                         start=dt,
-                                                         end=dt+relativedelta(days=1),
-                                                         verbose=False)
-            price = Decimal(str(stock_data.get_hist.adj_close[0]))
-
-    def current_value(self):
-        dummy = functions.stock.Stock(self.stock.ticker)
-        current_price = Decimal(dummy.bid)
-        return Decimal(str(current_price)) - self.initial_price
+            price = self.stock.get_price(dt=dt, column=column)
+        return price - self.initial_price
 
 
 class Short(Trade):
@@ -119,10 +107,12 @@ class Short(Trade):
     def __str__(self):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
-    def current_value(self):
-        dummy = functions.stock.Stock(self.stock.ticker)
-        current_price = Decimal(dummy.ask)
-        return Decimal(str(self.initial_price)) - current_price
+    def value(self, dt=date.today(), column='adj_close'):
+        if dt == date.today():
+            price = self.stock.get_ask()
+        else:
+            price = self.stock.get_price(dt=dt, column=column)
+        return self.initial_price - price
 
 
 class Option(Trade):
@@ -315,3 +305,26 @@ class Stock(models.Model):
             self.trailing_EPS = stock_obj.trailing_EPS
 
         super().save(*args, **kwargs)
+
+    def get_price(self, dt, column='adj_close'):
+        stock_data = functions.stock.HistoricalStock(ticker=self.ticker,
+                                                     name=self.name,
+                                                     start=dt,
+                                                     end=dt + relativedelta(days=1),
+                                                     verbose=False)
+        price = Decimal(str(stock_data.get_hist.loc[:, column][0]))
+        return price
+
+    def get_bid(self):
+        stock_data = functions.stock.Stock(ticker=self.ticker,
+                                           name=self.name,
+                                           verbose=False)
+        price = Decimal(str(stock_data.bid))
+        return price
+
+    def get_ask(self):
+        stock_data = functions.stock.Stock(ticker=self.ticker,
+                                           name=self.name,
+                                           verbose=False)
+        price = Decimal(str(stock_data.ask))
+        return price

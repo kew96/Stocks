@@ -140,7 +140,7 @@ class LongPut(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date-relativedelta(years=2),
+                                                start=start_date - relativedelta(years=2),
                                                 end=start_date)
         if self.option_type == 'American':
             return binomial_pricing_tree(data=dummy.get_hist,
@@ -158,6 +158,7 @@ class LongPut(Option):
                                         rf=rf,
                                         end_date=end_date,
                                         start_date=start_date,
+                                        dividend_yield=self.stock.dividend_yield,
                                         call=False)
 
 
@@ -173,7 +174,7 @@ class LongCall(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date-relativedelta(years=2),
+                                                start=start_date - relativedelta(years=2),
                                                 end=start_date)
         return black_scholes_merton(data=dummy.get_hist,
                                     column=column,
@@ -181,6 +182,7 @@ class LongCall(Option):
                                     rf=rf,
                                     end_date=end_date,
                                     start_date=start_date,
+                                    dividend_yield=self.stock.dividend_yield,
                                     call=True)
 
 
@@ -197,7 +199,7 @@ class ShortPut(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date-relativedelta(years=2),
+                                                start=start_date - relativedelta(years=2),
                                                 end=start_date)
         if self.option_type == 'American':
             if tree:
@@ -226,6 +228,7 @@ class ShortPut(Option):
                                          rf=rf,
                                          end_date=end_date,
                                          start_date=start_date,
+                                         dividend_yield=self.stock.dividend_yield,
                                          call=False)
 
 
@@ -241,7 +244,7 @@ class ShortCall(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date-relativedelta(years=2),
+                                                start=start_date - relativedelta(years=2),
                                                 end=start_date)
         return -black_scholes_merton(data=dummy.get_hist,
                                      column=column,
@@ -249,6 +252,7 @@ class ShortCall(Option):
                                      rf=rf,
                                      end_date=end_date,
                                      start_date=start_date,
+                                     dividend_yield=self.stock.dividend_yield,
                                      call=True)
 
 

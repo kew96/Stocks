@@ -4,7 +4,8 @@ from datetime import date
 from scipy.stats import norm
 
 
-def black_scholes_merton(data, column, strike, rf, end_date, start_date=date.today(), call=True):
+def black_scholes_merton(data, column, strike, rf, end_date, start_date=date.today(), dividend_yield=0, call=True):
+    continuous_dividend = log(1+dividend_yield)
     returns = log(data.loc[:, column] / data.loc[:, column].shift())
     time_dif = data.index[-1] - data.index[-2]
     quote = data.loc[:, column][-1]
@@ -22,17 +23,18 @@ def black_scholes_merton(data, column, strike, rf, end_date, start_date=date.tod
     elif time_dif.days == 0:
         raise ValueError('Must use at least daily returns.')
 
+    modified_quote = quote * exp(-continuous_dividend * duration)
     returns = returns[int(-(700 / time_dif.days)):]
     vol = sqrt(1 / (len(returns - 1)) * (((returns - returns.mean()) ** 2).sum()) * sqrt(year_periods))
 
-    d1 = (log(quote / strike) + (rf + (vol ** 2) / 2) * (duration / time_dif.days / year_periods)) / (vol * sqrt(
+    d1 = (log(modified_quote / strike) + (rf + (vol ** 2) / 2) * (duration / time_dif.days / year_periods)) / (vol * sqrt(
              duration / time_dif.days / year_periods))
     d2 = d1 - vol * sqrt(duration / time_dif.days / year_periods)
 
     if call:
-        value = quote * norm.cdf(d1) - exp(-rf * (duration / time_dif.days / year_periods)) * strike * norm.cdf(d2)
+        value = modified_quote * norm.cdf(d1) - exp(-rf * (duration / time_dif.days / year_periods)) * strike * norm.cdf(d2)
     else:
-        value = exp(-rf * (duration / time_dif.days / year_periods)) * strike * norm.cdf(-d2) - quote * norm.cdf(-d1)
+        value = exp(-rf * (duration / time_dif.days / year_periods)) * strike * norm.cdf(-d2) - modified_quote * norm.cdf(-d1)
 
     return value
 

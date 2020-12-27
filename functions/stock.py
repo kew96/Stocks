@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 import pandas as pd
-import yfinance
+import yfinance as yf
 from alpha_vantage.timeseries import TimeSeries
 from dateutil.relativedelta import relativedelta
 from talib import abstract as ta
@@ -26,7 +26,7 @@ class Stock:
         self.ticker = ticker
         self.name = name
         self.__set_name_ticker()
-        self.__obj = yfinance.Ticker(self.ticker)
+        self.__obj = yf.Ticker(self.ticker)
         self.__gen_info = self.__obj.info
         self.summary = self.__gen_info['longBusinessSummary']
         self.sector = self.__gen_info['sector']
@@ -40,7 +40,7 @@ class Stock:
             self.market_cap = self.__gen_info['marketCap']
             self.price_to_sales_12m = self.__gen_info['priceToSalesTrailing12Months']
             self.forward_PE = self.__gen_info['forwardPE']
-            self.tradable = self.__gen_info['tradeable']
+            self.tradeable = self.__gen_info['tradeable']
             self.dividend_yield = self.__gen_info['dividendYield']
             self.forward_EPS = self.__gen_info['forwardEps']
             self.profit_margin = self.__gen_info['profitMargins']
@@ -144,31 +144,31 @@ class HistoricalStock(Stock):
                 self.__hist_info = pd.DataFrame()
                 while next_date < end:
                     print(start, next_date)
-                    holder = yfinance.download(self.ticker, start=start, end=min(end, next_date),
-                                               interval=self.interval, auto_adjust=self.adjusted, prepost=self.prepost,
-                                               threads=True)
+                    holder = yf.download(self.ticker, start=start, end=min(end, next_date),
+                                         interval=self.interval, auto_adjust=self.adjusted, prepost=self.prepost,
+                                         threads=True)
                     start = next_date
                     next_date = start + timedelta(days=7)
                     self.__hist_info = self.__hist_info.append(holder)
             else:
-                self.__hist_info = yfinance.download(self.ticker, period=self.period, interval=self.interval,
-                                                     auto_adjust=self.adjusted, prepost=self.prepost, threads=True)
+                self.__hist_info = yf.download(self.ticker, period=self.period, interval=self.interval,
+                                               auto_adjust=self.adjusted, prepost=self.prepost, threads=True)
         elif self.__dates_bool:
             if self.interval == '1m' and (self.end - self.start).days > 7:
                 start = self.start
                 next_date = self.start - timedelta(days=7)
                 self.__hist_info = pd.DataFrame()
                 while next_date > self.end:
-                    holder = yfinance.download(self.ticker, start=start, end=min(end, next_date),
-                                               interval=self.interval, auto_adjust=self.adjusted, prepost=self.prepost,
-                                               threads=True)
+                    holder = yf.download(self.ticker, start=start, end=min(end, next_date),
+                                         interval=self.interval, auto_adjust=self.adjusted, prepost=self.prepost,
+                                         threads=True)
                     start = next_date
                     next_date = start - timedelta(days=7)
                     self.__hist_info = self.__hist_info.append(holder)
             else:
-                self.__hist_info = yfinance.download(self.ticker, start=self.start, end=self.end,
-                                                     interval=self.interval, auto_adjust=self.adjusted,
-                                                     prepost=self.prepost, threads=True)
+                self.__hist_info = yf.download(self.ticker, start=self.start, end=self.end,
+                                               interval=self.interval, auto_adjust=self.adjusted,
+                                               prepost=self.prepost, threads=True)
         self.__hist_info.columns = self.__hist_info.columns.str.lower()
         self.__hist_info.volume = self.__hist_info.volume.astype(float)
 
@@ -1214,9 +1214,3 @@ class HistoricalStock(Stock):
     def hilbert_transform_phasor_components(self, series_type: str = 'close') -> pd.Series:
         series_type = check_series_type(series_type)
         return ta.HT_PHASOR(self.__hist_info, price=series_type)
-
-
-if __name__ == '__main__':
-    # noinspection SpellCheckingInspection
-    s = HistoricalStock('MSFT', period='1mo', interval='1d')
-    print(s.bollinger_bands())

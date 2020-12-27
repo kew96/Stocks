@@ -140,7 +140,7 @@ class LongPut(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date - relativedelta(years=2),
+                                                start=start_date-relativedelta(years=2),
                                                 end=start_date)
         if self.option_type == 'American':
             return binomial_pricing_tree(data=dummy.get_hist,
@@ -173,7 +173,7 @@ class LongCall(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date - relativedelta(years=2),
+                                                start=start_date-relativedelta(years=2),
                                                 end=start_date)
         return black_scholes_merton(data=dummy.get_hist,
                                     column=column,
@@ -197,7 +197,7 @@ class ShortPut(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date - relativedelta(years=2),
+                                                start=start_date-relativedelta(years=2),
                                                 end=start_date)
         if self.option_type == 'American':
             if tree:
@@ -241,7 +241,7 @@ class ShortCall(Option):
             end_date = self.expiration
         dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
                                                 name=self.stock.name,
-                                                start=start_date - relativedelta(years=2),
+                                                start=start_date-relativedelta(years=2),
                                                 end=start_date)
         return -black_scholes_merton(data=dummy.get_hist,
                                      column=column,

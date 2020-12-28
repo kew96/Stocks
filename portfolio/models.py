@@ -20,6 +20,7 @@ getcontext().prec = 2
 class Portfolio(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, default='Test')
+    starting_value = models.DecimalField(decimal_places=2, max_digits=100)
     cash = models.DecimalField(decimal_places=2, max_digits=100)
     inception = models.DateField(default=timezone.now)
     fee_rate = models.FloatField(default=0)
@@ -37,7 +38,13 @@ class Portfolio(models.Model):
     # TODO: overall performance
 
 
-# TODO: PortfolioValueHistory
+class PortfolioValueHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    portfolio = models.ForeignKey('Portfolio', on_delete=models.CASADE, related_name='value_history')
+    date = models.DateField(default=timezone.now)
+    cash = models.DecimalField(decimal_places=2, max_digits=100)
+    unrealized_gain_loss
+
 
 class Trade(PolymorphicModel):
     # https://medium.com/@bhrigu/django-how-to-add-foreignkey-to-multiple-models-394596f06e84
@@ -64,7 +71,6 @@ class Trade(PolymorphicModel):
     type = models.CharField(max_length=4, default=buy, choices=choices)
     subtype = models.CharField(max_length=5, default=open, choices=subchoices)
     initial_price = models.DecimalField(decimal_places=2, max_digits=100, default=0)
-    shares = models.IntegerField(default=0)
     fee_rate = models.IntegerField(default=0)
     fee_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
     trade_cost = models.DecimalField(decimal_places=2, max_digits=100, default=0)
@@ -88,29 +94,45 @@ class TradeValueHistory(models.Model):
 
 
 class Long(Trade):
+    shares = models.IntegerField(default=0)
 
     def __str__(self):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
+
+    def unrealized_gain_loss(self, dt=date.today(), column='adj_close'):
+        if dt == date.today():
+            price = self.stock.get_bid()
+        else:
+            price = self.stock.get_price(dt=dt, column=column)
+        return (price - self.initial_price) * Decimal(str(self.shares))
 
     def value(self, dt=date.today(), column='adj_close'):
         if dt == date.today():
             price = self.stock.get_bid()
         else:
             price = self.stock.get_price(dt=dt, column=column)
-        return price - self.initial_price
+        return price * Decimal(str(self.shares))
 
 
 class Short(Trade):
+    shares = models.IntegerField(default=0)
 
     def __str__(self):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
 
-    def value(self, dt=date.today(), column='adj_close'):
+    def unrealized_gain_loss(self, dt=date.today(), column='adj_close'):
         if dt == date.today():
             price = self.stock.get_ask()
         else:
             price = self.stock.get_price(dt=dt, column=column)
-        return self.initial_price - price
+        return (self.initial_price - price) * Decimal(str(self.shares))
+
+    def value(self, dt=date.today(), column='adj_close'):
+        if dt == date.today():
+            price = self.stock.get_bid()
+        else:
+            price = self.stock.get_price(dt=dt, column=column)
+        return -price * Decimal(str(self.shares))
 
 
 class Option(Trade):
@@ -124,6 +146,7 @@ class Option(Trade):
 
     expiration = models.DateField(default=timezone.now() + relativedelta(months=3))
     strike = models.DecimalField(decimal_places=2, max_digits=100)
+    contracts = models.IntegerField(default=0)
     option_cost = models.DecimalField(decimal_places=2, max_digits=100)
     option_type = models.CharField(max_length=8, default=american, choices=option_choices)
 
@@ -150,7 +173,7 @@ class LongPut(Option):
                                          steps=steps,
                                          end_date=end_date,
                                          start_date=start_date,
-                                         tree=tree)
+                                         tree=tree) * Decimal(str(self.contracts))
         else:
             return black_scholes_merton(data=dummy.get_hist,
                                         column=column,
@@ -159,7 +182,7 @@ class LongPut(Option):
                                         end_date=end_date,
                                         start_date=start_date,
                                         dividend_yield=self.stock.dividend_yield,
-                                        call=False)
+                                        call=False) * Decimal(str(self.contracts))
 
 
 class LongCall(Option):
@@ -183,7 +206,7 @@ class LongCall(Option):
                                     end_date=end_date,
                                     start_date=start_date,
                                     dividend_yield=self.stock.dividend_yield,
-                                    call=True)
+                                    call=True) * Decimal(str(self.contracts))
 
 
 class ShortPut(Option):
@@ -210,7 +233,7 @@ class ShortPut(Option):
                                                                 steps=steps,
                                                                 end_date=end_date,
                                                                 start_date=start_date,
-                                                                tree=False)
+                                                                tree=False) * Decimal(str(self.contracts))
                 return stock_tree, -1 * option_tree
             else:
                 return -binomial_pricing_tree(data=dummy.get_hist,
@@ -220,7 +243,7 @@ class ShortPut(Option):
                                               steps=steps,
                                               end_date=end_date,
                                               start_date=start_date,
-                                              tree=False)
+                                              tree=False) * Decimal(str(self.contracts))
         else:
             return -black_scholes_merton(data=dummy.get_hist,
                                          column=column,
@@ -253,7 +276,7 @@ class ShortCall(Option):
                                      end_date=end_date,
                                      start_date=start_date,
                                      dividend_yield=self.stock.dividend_yield,
-                                     call=True)
+                                     call=True) * Decimal(str(self.contracts))
 
 
 class Stock(models.Model):

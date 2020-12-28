@@ -156,66 +156,8 @@ class LongPut(Option):
     def __str__(self):
         return f'{self.stock.ticker}-LongPut-{self.type}({self.expiration})-{self.strike}'
 
-    def value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(), tree=False):
-        if strike is None:
-            strike = self.strike
-        if end_date is None:
-            end_date = self.expiration
-        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
-                                                name=self.stock.name,
-                                                start=start_date - relativedelta(years=2),
-                                                end=start_date)
-        if self.option_type == 'American':
-            return binomial_pricing_tree(data=dummy.get_hist,
-                                         column=column,
-                                         strike=strike,
-                                         rf=rf,
-                                         steps=steps,
-                                         end_date=end_date,
-                                         start_date=start_date,
-                                         tree=tree) * Decimal(str(self.contracts))
-        else:
-            return black_scholes_merton(data=dummy.get_hist,
-                                        column=column,
-                                        strike=strike,
-                                        rf=rf,
-                                        end_date=end_date,
-                                        start_date=start_date,
-                                        dividend_yield=self.stock.dividend_yield,
-                                        call=False) * Decimal(str(self.contracts))
-
-
-class LongCall(Option):
-
-    def __str__(self):
-        return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
-
-    def value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
-        if strike is None:
-            strike = self.strike
-        if end_date is None:
-            end_date = self.expiration
-        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
-                                                name=self.stock.name,
-                                                start=start_date - relativedelta(years=2),
-                                                end=start_date)
-        return black_scholes_merton(data=dummy.get_hist,
-                                    column=column,
-                                    strike=strike,
-                                    rf=rf,
-                                    end_date=end_date,
-                                    start_date=start_date,
-                                    dividend_yield=self.stock.dividend_yield,
-                                    call=True) * Decimal(str(self.contracts))
-
-
-class ShortPut(Option):
-
-    def __str__(self):
-        return f'{self.stock.ticker}-ShortPut-{self.type}({self.expiration})-{self.strike}'
-
-    def current_value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(),
-                      tree=False):
+    def unrealized_gain_loss(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(),
+                             tree=False):
         if strike is None:
             strike = self.strike
         if end_date is None:
@@ -233,19 +175,19 @@ class ShortPut(Option):
                                                                 steps=steps,
                                                                 end_date=end_date,
                                                                 start_date=start_date,
-                                                                tree=False) * Decimal(str(self.contracts))
-                return stock_tree, -1 * option_tree
+                                                                tree=True)
+                return stock_tree, (option_tree - self.initial_price) * self.contracts
             else:
-                return -binomial_pricing_tree(data=dummy.get_hist,
+                price = binomial_pricing_tree(data=dummy.get_hist,
                                               column=column,
                                               strike=strike,
                                               rf=rf,
                                               steps=steps,
                                               end_date=end_date,
                                               start_date=start_date,
-                                              tree=False) * Decimal(str(self.contracts))
+                                              tree=False)
         else:
-            return -black_scholes_merton(data=dummy.get_hist,
+            price = black_scholes_merton(data=dummy.get_hist,
                                          column=column,
                                          strike=strike,
                                          rf=rf,
@@ -253,14 +195,9 @@ class ShortPut(Option):
                                          start_date=start_date,
                                          dividend_yield=self.stock.dividend_yield,
                                          call=False)
+        return (price - self.initial_price) * Decimal(str(self.contracts))
 
-
-class ShortCall(Option):
-
-    def __str__(self):
-        return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
-
-    def current_value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+    def value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(), tree=False):
         if strike is None:
             strike = self.strike
         if end_date is None:
@@ -269,14 +206,181 @@ class ShortCall(Option):
                                                 name=self.stock.name,
                                                 start=start_date - relativedelta(years=2),
                                                 end=start_date)
-        return -black_scholes_merton(data=dummy.get_hist,
+        if self.option_type == 'American':
+            price = binomial_pricing_tree(data=dummy.get_hist,
+                                          column=column,
+                                          strike=strike,
+                                          rf=rf,
+                                          steps=steps,
+                                          end_date=end_date,
+                                          start_date=start_date,
+                                          tree=tree)
+        else:
+            price = black_scholes_merton(data=dummy.get_hist,
+                                         column=column,
+                                         strike=strike,
+                                         rf=rf,
+                                         end_date=end_date,
+                                         start_date=start_date,
+                                         dividend_yield=self.stock.dividend_yield,
+                                         call=False)
+        return price * Decimal(str(self.contracts))
+
+
+class LongCall(Option):
+
+    def __str__(self):
+        return f'{self.stock.ticker}-LongCall-{self.type}({self.expiration})-{self.strike}'
+
+    def unrealized_gain_loss(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
+        price = black_scholes_merton(data=dummy.get_hist,
                                      column=column,
                                      strike=strike,
                                      rf=rf,
                                      end_date=end_date,
                                      start_date=start_date,
                                      dividend_yield=self.stock.dividend_yield,
-                                     call=True) * Decimal(str(self.contracts))
+                                     call=True)
+        return (price - self.initial_price) * Decimal(str(self.contracts))
+
+
+class ShortPut(Option):
+
+    def __str__(self):
+        return f'{self.stock.ticker}-ShortPut-{self.type}({self.expiration})-{self.strike}'
+
+    def unrealized_gain_loss(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(),
+                             tree=False):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
+        if self.option_type == 'American':
+            if tree:
+                stock_tree, option_tree = binomial_pricing_tree(data=dummy.get_hist,
+                                                                column=column,
+                                                                strike=strike,
+                                                                rf=rf,
+                                                                steps=steps,
+                                                                end_date=end_date,
+                                                                start_date=start_date,
+                                                                tree=True)
+                return stock_tree, (self.initial_price - option_tree) * self.contracts
+            else:
+                price = -binomial_pricing_tree(data=dummy.get_hist,
+                                               column=column,
+                                               strike=strike,
+                                               rf=rf,
+                                               steps=steps,
+                                               end_date=end_date,
+                                               start_date=start_date,
+                                               tree=False)
+        else:
+            price = -black_scholes_merton(data=dummy.get_hist,
+                                          column=column,
+                                          strike=strike,
+                                          rf=rf,
+                                          end_date=end_date,
+                                          start_date=start_date,
+                                          dividend_yield=self.stock.dividend_yield,
+                                          call=False)
+        return (self.initial_price - price) * Decimal(str(self.contracts))
+
+    def value(self, rf, column='Close', strike=None, steps=100, end_date=None, start_date=date.today(), tree=False):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
+        if self.option_type == 'American':
+            if tree:
+                stock_tree, option_tree = binomial_pricing_tree(data=dummy.get_hist,
+                                                                column=column,
+                                                                strike=strike,
+                                                                rf=rf,
+                                                                steps=steps,
+                                                                end_date=end_date,
+                                                                start_date=start_date,
+                                                                tree=True)
+                return stock_tree, (self.initial_price - option_tree) * self.contracts
+            else:
+                price = -binomial_pricing_tree(data=dummy.get_hist,
+                                               column=column,
+                                               strike=strike,
+                                               rf=rf,
+                                               steps=steps,
+                                               end_date=end_date,
+                                               start_date=start_date,
+                                               tree=False)
+        else:
+            price = -black_scholes_merton(data=dummy.get_hist,
+                                          column=column,
+                                          strike=strike,
+                                          rf=rf,
+                                          end_date=end_date,
+                                          start_date=start_date,
+                                          dividend_yield=self.stock.dividend_yield,
+                                          call=False)
+        return price * Decimal(str(self.contracts))
+
+
+class ShortCall(Option):
+
+    def __str__(self):
+        return f'{self.stock.ticker}-ShortCall-{self.type}({self.expiration})-{self.strike}'
+
+    def unrealized_gain_loss(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
+        price = -black_scholes_merton(data=dummy.get_hist,
+                                      column=column,
+                                      strike=strike,
+                                      rf=rf,
+                                      end_date=end_date,
+                                      start_date=start_date,
+                                      dividend_yield=self.stock.dividend_yield,
+                                      call=True)
+        return (self.initial_price - price) * Decimal(str(self.contracts))
+
+    def value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
+        price = -black_scholes_merton(data=dummy.get_hist,
+                                      column=column,
+                                      strike=strike,
+                                      rf=rf,
+                                      end_date=end_date,
+                                      start_date=start_date,
+                                      dividend_yield=self.stock.dividend_yield,
+                                      call=True)
+        return price * Decimal(str(self.contracts))
 
 
 class Stock(models.Model):

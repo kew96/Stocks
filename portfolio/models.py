@@ -28,10 +28,19 @@ class Portfolio(models.Model):
     def __str__(self):
         return f'{self.name} ${self.total_value()}'
 
-    def total_value(self):
-        open_trades = Trade.objects.filter(closed__isnull=True)
-        unrealized_gains = sum([trade.current_value() for trade in open_trades])
-        return self.cash + unrealized_gains
+    def unrealized_gain_loss(self, dt=date.today()):
+        if dt == date.today():
+            trade_gain_loss = [trade.unrealized_gain_loss() for trade in self.trades]
+            return sum(trade_gain_loss)
+        else:
+            return self.value_history.filter(date=dt).unrealized_gain_loss
+
+    def value(self, dt=date.today()):
+        if dt == date.today():
+            trade_values = [trade.value() for trade in self.trades]
+            return sum(trade_values)
+        else:
+            return self.value_history.filter(date=dt).value
 
     # TODO: period performance
 
@@ -40,10 +49,11 @@ class Portfolio(models.Model):
 
 class PortfolioValueHistory(models.Model):
     id = models.AutoField(primary_key=True)
-    portfolio = models.ForeignKey('Portfolio', on_delete=models.CASADE, related_name='value_history')
+    portfolio = models.ForeignKey('Portfolio', on_delete=models.CASCADE, related_name='value_history')
     date = models.DateField(default=timezone.now)
     cash = models.DecimalField(decimal_places=2, max_digits=100)
-    unrealized_gain_loss
+    unrealized_gain_loss = models.DecimalField(decimal_places=2, max_digits=100)
+    value = models.DecimalField(decimal_places=2, max_digits=100)
 
 
 class Trade(PolymorphicModel):

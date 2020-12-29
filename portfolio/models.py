@@ -173,7 +173,7 @@ class TradeValueHistory(models.Model):
 
 
 class Long(Trade):
-    shares = models.IntegerField(default=0)
+    shares = models.DecimalField(decimal_places=4, max_digits=100, default=0)
 
     def __str__(self):
         return f'{self.stock.ticker}-Long-{self.type}({self.initiated})'
@@ -202,7 +202,7 @@ class Long(Trade):
 
 
 class Short(Trade):
-    shares = models.IntegerField(default=0)
+    shares = models.DecimalField(decimal_places=4, max_digits=100, default=0)
 
     def __str__(self):
         return f'{self.stock.ticker}-Short-{self.type}({self.initiated})'
@@ -238,7 +238,7 @@ class Option(Trade):
 
     expiration = models.DateField(default=timezone.now() + relativedelta(months=3))
     strike = models.DecimalField(decimal_places=2, max_digits=100)
-    contracts = models.IntegerField(default=0)
+    contracts = models.DecimalField(decimal_places=4, max_digits=100, default=0)
     option_cost = models.DecimalField(decimal_places=2, max_digits=100)
     option_type = models.CharField(max_length=8, default=american, choices=option_choices)
 

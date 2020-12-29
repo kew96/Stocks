@@ -80,6 +80,26 @@ class Portfolio(models.Model):
         performance = self.period_performance(start=self.inception, end=date.today())
         return performance
 
+    def daily_performance(self):
+        performance = self.period_performance(start=date.today()-relativedelta(days=1), end=date.today())
+        return performance
+
+    def weekly_performance(self):
+        performance = self.period_performance(start=date.today()-relativedelta(days=7), end=date.today())
+        return performance
+
+    def monthly_performance(self):
+        performance = self.period_performance(start=date.today()-relativedelta(months=1), end=date.today())
+        return performance
+
+    def yearly_performance(self):
+        performance = self.period_performance(start=date.today()-relativedelta(years=1), end=date.today())
+        return performance
+
+    def ytd_performance(self):
+        performance = self.period_performance(start=date(date.today().year, 1, 1), end=date.today())
+        return performance
+
     def save(self, *args, **kwargs):
         if not self.pk:
             pvf = PortfolioValueHistory(

@@ -80,6 +80,21 @@ class Portfolio(models.Model):
         performance = self.period_performance(start=self.inception, end=date.today())
         return performance
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            pvf = PortfolioValueHistory(
+                portfolio=self,
+                date=self.inception,
+                cash=self.cash,
+                unrealized_gain_loss=0,
+                value=self.starting_value
+            )
+        else:
+            pvf = None
+        super(Portfolio, self).save(*args, **kwargs)
+        if pvf:
+            pvf.save()
+
 
 class PortfolioValueHistory(models.Model):
     id = models.AutoField(primary_key=True)

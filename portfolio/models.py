@@ -76,7 +76,6 @@ class Portfolio(models.Model):
 
         return performance_dict
 
-    # TODO: overall performance
     def overall_performance(self):
         performance = self.period_performance(start=self.inception, end=date.today())
         return performance

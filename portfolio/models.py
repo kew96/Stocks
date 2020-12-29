@@ -172,6 +172,14 @@ class Long(Trade):
             price = self.stock.get_price(dt=dt, column=column)
         return price * Decimal(str(self.shares))
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.portfolio.cash -= self.total_cost
+            if self.portfolio.cash < 0:
+                self.portfolio.cash += self.total_cost
+                raise ValueError(f'Insufficient Cash: {self.portfolio.cash-self.total_cost}')
+        super(Long, self).save(*args, **kwargs)
+
 
 class Short(Trade):
     shares = models.IntegerField(default=0)
@@ -192,6 +200,11 @@ class Short(Trade):
         else:
             price = self.stock.get_price(dt=dt, column=column)
         return -price * Decimal(str(self.shares))
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.portfolio.cash += self.total_cost
+        super(Short, self).save(*args, **kwargs)
 
 
 class Option(Trade):
@@ -285,6 +298,14 @@ class LongPut(Option):
                                          call=False)
         return price * Decimal(str(self.contracts))
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.portfolio.cash -= self.total_cost
+            if self.portfolio.cash < 0:
+                self.portfolio.cash += self.total_cost
+                raise ValueError(f'Insufficient Cash: {self.portfolio.cash-self.total_cost}')
+        super(LongPut, self).save(*args, **kwargs)
+
 
 class LongCall(Option):
 
@@ -309,6 +330,33 @@ class LongCall(Option):
                                      dividend_yield=self.stock.dividend_yield,
                                      call=True)
         return (price - self.initial_price) * Decimal(str(self.contracts))
+
+    def value(self, rf, column='Close', strike=None, end_date=None, start_date=date.today()):
+        if strike is None:
+            strike = self.strike
+        if end_date is None:
+            end_date = self.expiration
+        dummy = functions.stock.HistoricalStock(ticker=self.stock.ticker,
+                                                name=self.stock.name,
+                                                start=start_date - relativedelta(years=2),
+                                                end=start_date)
+        price = black_scholes_merton(data=dummy.get_hist,
+                                     column=column,
+                                     strike=strike,
+                                     rf=rf,
+                                     end_date=end_date,
+                                     start_date=start_date,
+                                     dividend_yield=self.stock.dividend_yield,
+                                     call=True)
+        return price * Decimal(str(self.contracts))
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.portfolio.cash -= self.total_cost
+            if self.portfolio.cash < 0:
+                self.portfolio.cash += self.total_cost
+                raise ValueError(f'Insufficient Cash: {self.portfolio.cash-self.total_cost}')
+        super(LongCall, self).save(*args, **kwargs)
 
 
 class ShortPut(Option):
@@ -397,6 +445,11 @@ class ShortPut(Option):
                                           call=False)
         return price * Decimal(str(self.contracts))
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.portfolio.cash += self.total_cost
+        super(ShortPut, self).save(*args, **kwargs)
+
 
 class ShortCall(Option):
 
@@ -440,6 +493,11 @@ class ShortCall(Option):
                                       dividend_yield=self.stock.dividend_yield,
                                       call=True)
         return price * Decimal(str(self.contracts))
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.portfolio.cash += self.total_cost
+        super(ShortCall, self).save(*args, **kwargs)
 
 
 class Stock(models.Model):

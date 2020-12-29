@@ -42,9 +42,44 @@ class Portfolio(models.Model):
         else:
             return self.value_history.filter(date=dt).value
 
-    # TODO: period performance
+    def period_performance(self, start=date.today()-relativedelta(months=1), end=date.today()):
+        value_start = self.value(dt=start)
+        value_end = self.value(dt=end)
+        value_chng = value_end - value_start
+        pct_value_chng = value_chng / value_start
+
+        unrealized_start = self.unrealized_gain_loss(dt=start)
+        unrealized_end = self.unrealized_gain_loss(dt=end)
+        unrealized_chng = unrealized_end - unrealized_start
+        pct_unrealized_chng = unrealized_chng / unrealized_start
+
+        realized_start = value_start - unrealized_start
+        realized_end = value_end - unrealized_end
+        realized_chng = realized_start - realized_end
+        pct_realized_chng = realized_chng / realized_start
+
+        cash_start = self.value_history.get(date=start).cash
+        cash_end = self.value_history.get(date=end).cash
+        cash_chng = cash_end - cash_start
+        pct_cash_chng = cash_chng / cash_start
+
+        performance_dict = {
+            'value_change': value_chng,
+            'value_change_percent': pct_value_chng,
+            'unrealized_gain_loss_change': unrealized_chng,
+            'unrealized_gain_loss_change_percent': pct_unrealized_chng,
+            'realized_gain_loss_change': realized_chng,
+            'realized_gain_loss_change_percent': pct_realized_chng,
+            'cash_change': cash_chng,
+            'cash_change_percent': pct_cash_chng
+        }
+
+        return performance_dict
 
     # TODO: overall performance
+    def overall_performance(self):
+        performance = self.period_performance(start=self.inception, end=date.today())
+        return performance
 
 
 class PortfolioValueHistory(models.Model):

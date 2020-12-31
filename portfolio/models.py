@@ -26,7 +26,7 @@ class Portfolio(models.Model):
     fee_rate = models.FloatField(default=0)
 
     def __str__(self):
-        return f'{self.name} ${self.total_value()}'
+        return f'{self.name} ${self.value()}'
 
     def unrealized_gain_loss(self, dt=date.today()):
         if dt == date.today():

@@ -1,3 +1,4 @@
+from typing import Union
 from datetime import date, timedelta
 
 import pandas as pd
@@ -10,7 +11,6 @@ from functions.alias.alias import Alias, aliased
 from functions.errors import NoTickerError
 from functions.helper_functions.general_helpers import check_convert_date, check_list_options, check_matype, \
     check_series_type
-
 
 alpha_vantage_KEY = '7ZDI2M6PEWCEOSFC'
 av_ts = TimeSeries(alpha_vantage_KEY)
@@ -117,11 +117,15 @@ class Stock:
         return self.__gen_info
 
 
+AnyDate = Union[str, date]
+
+
 @aliased
 class HistoricalStock(Stock):
 
-    def __init__(self, ticker: str = None, name: str = None, start: str = None, end: str = None, period: str = None,
-                 interval: str = '1d', adjusted: bool = False, prepost: bool = False, verbose: bool = True):
+    def __init__(self, ticker: str = None, name: str = None, start: AnyDate = None, end: AnyDate = None,
+                 period: str = None, interval: str = '1d', adjusted: bool = False, prepost: bool = False,
+                 verbose: bool = True):
         super().__init__(ticker, name, verbose)
         self.__dates_bool = False if start is None and end is None else True
         self.__period_bool = False if period is None else True

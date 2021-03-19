@@ -5,7 +5,7 @@ async-timeout==4.0.0a2
 attrs==20.2.0
 certifi==2020.6.20
 chardet==3.0.4
-Django==3.1.2
+Django==3.1.6
 django-polymorphic==3.0.0
 foil==0.2.7
 idna==2.10
